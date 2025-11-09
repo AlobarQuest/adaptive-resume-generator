@@ -249,10 +249,10 @@ See [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) for complete schema details.
 - [x] Project structure established
 - [x] License (MIT) added
 - [x] Git Flow documented
-- [ ] All ADRs written
-- [ ] Database schema implemented
-- [ ] SQLAlchemy models created
-- [ ] Alembic migrations configured
+- [x] All ADRs written
+- [x] Database schema implemented
+- [x] SQLAlchemy models created
+- [x] Alembic migrations configured
 
 **Deliverables:**
 - Complete documentation set
@@ -260,23 +260,25 @@ See [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) for complete schema details.
 - Development environment reproducible
 
 ### Phase 2: Core Data Management (Week 2)
-**Goal:** CRUD operations for all entities
+**Goal:** Expand service coverage across remaining entities and harden tests
 
-- [ ] Profile management
-- [ ] Jobs CRUD with relationship to profile
-- [ ] Bullet points CRUD with tagging
-- [ ] Skills management
-- [ ] Education and certifications
-- [ ] Unit tests for all models (90%+ coverage)
+- [x] Profile management service (see `src/adaptive_resume/services/profile_service.py`)
+- [x] Jobs CRUD with relationship to profile (`job_service.py`)
+- [x] Bullet points CRUD with tagging (tested in `tests/unit/`)
+- [ ] Skills service implementation
+- [ ] Education service implementation
+- [ ] Certification service implementation
+- [ ] Unit tests for new services and outstanding models (90%+ coverage)
 
 **Deliverables:**
-- All data can be created, read, updated, deleted
-- Tests verify data integrity
-- Database properly constrainted
+- Skills, education, and certification data managed through the service layer
+- Pytest suites expanded (e.g., `tests/unit/`) to cover new services and fixtures
+- Database constraints validated through service- and model-level tests
 
 ### Phase 3: Basic GUI (Week 3)
 **Goal:** User can input and view their data
 
+- [ ] Prerequisite: Skills/Education/Certification services feature-complete
 - [ ] Main window with navigation
 - [ ] Profile editor dialog
 - [ ] Job editor with inline bullet point management
@@ -285,13 +287,14 @@ See [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) for complete schema details.
 - [ ] Data display views (list jobs, skills, etc.)
 
 **Deliverables:**
-- Functional desktop application
-- Users can manage all their data
+- Functional desktop application backed by the completed service layer
+- Users can manage all their data through PyQt6 views/forms
 - Basic UI/UX patterns established
 
 ### Phase 4: Matching Engine (Week 4)
 **Goal:** Intelligent bullet point suggestion
 
+- [ ] Prerequisite: Stable CRUD services and tests across all entities
 - [ ] Job description text parser
 - [ ] Keyword extraction
 - [ ] TF-IDF based matching (initial approach)
@@ -307,6 +310,7 @@ See [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) for complete schema details.
 ### Phase 5: PDF Generation (Week 5)
 **Goal:** Create professional resume PDFs
 
+- [ ] Prerequisite: Completed matching engine APIs and data coverage
 - [ ] ReportLab template setup
 - [ ] Combination chronological/functional layout
 - [ ] Header with contact info
@@ -326,6 +330,7 @@ See [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) for complete schema details.
 ### Phase 6: Cover Letters (Week 6)
 **Goal:** Generate tailored cover letters
 
+- [ ] Prerequisite: Resume PDF pipeline finalized
 - [ ] Cover letter section management
 - [ ] Section editor with tags
 - [ ] Cover letter template (ReportLab)
@@ -342,6 +347,7 @@ See [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) for complete schema details.
 ### Phase 7: Application Tracking (Week 7)
 **Goal:** Track job applications
 
+- [ ] Prerequisite: Resume/Cover Letter builders and data services in place
 - [ ] Job application CRUD
 - [ ] Link applications to resumes and cover letters
 - [ ] Status tracking (applied, interview, offer, rejected)
@@ -357,6 +363,7 @@ See [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) for complete schema details.
 ### Phase 8: Polish & Testing (Week 8)
 **Goal:** Production-ready v1.0
 
+- [ ] Prerequisite: All prior feature backlogs resolved
 - [ ] Comprehensive integration testing
 - [ ] User acceptance testing
 - [ ] Bug fixes from testing
