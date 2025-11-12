@@ -1,13 +1,27 @@
-"""
-pytest configuration and fixtures for Adaptive Resume Generator tests.
+"""pytest configuration and fixtures for Adaptive Resume Generator tests."""
 
-This file provides shared fixtures that can be used across all tests.
-"""
+from __future__ import annotations
+
+import sys
+from datetime import date
+from pathlib import Path
 
 import pytest
-from datetime import date
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+_SRC_PATH = _PROJECT_ROOT / "src"
+
+# Ensure the ``adaptive_resume`` package is importable when the test suite
+# is executed without installing the project as a package. This mirrors the
+# behaviour provided by ``pip install -e .`` while keeping the test suite
+# self-contained for local and CI runs that simply invoke ``pytest``.
+if _SRC_PATH.is_dir():
+    sys.path.insert(0, str(_SRC_PATH))
+
+
 from adaptive_resume.models.base import Base
 from adaptive_resume.models import (
     Profile, Job, BulletPoint, Tag, BulletTag,
