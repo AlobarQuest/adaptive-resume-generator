@@ -76,7 +76,11 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "--cov=adaptive_resume --cov-report=html --cov-report=term"
+# Coverage reporting relies on the optional ``pytest-cov`` plugin. To keep the
+# default test run usable in minimal environments where the plugin might not be
+# installed, we do not force coverage options here. Developers can still request
+# coverage explicitly via ``pytest --cov`` when the plugin is available.
+addopts = ["-ra"]
 
 [tool.mypy]
 python_version = "3.11"
