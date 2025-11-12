@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+__all__ = ["MainWindow"]
+
 from typing import Optional
 
-try:
+try:  # pragma: no cover - import guard depends on platform runtime
     from PyQt6.QtCore import Qt
+    from PyQt6.QtGui import QAction
     from PyQt6.QtWidgets import (
-        QAction,
         QDialog,
         QHBoxLayout,
         QListWidget,
@@ -21,7 +23,7 @@ try:
         QVBoxLayout,
         QWidget,
     )
-except ImportError as exc:  # pragma: no cover
+except Exception as exc:  # pragma: no cover - handled during runtime import
     raise ImportError("PyQt6 is required to use the GUI components") from exc
 
 from adaptive_resume.models import Profile
