@@ -1,6 +1,6 @@
 # CLAUDE Resumption Guide
 
-**Purpose:** This document provides everything a CLaude AI needs to resume work on the Adaptive Resume Generator project effectively.
+**Purpose:** This document provides everything a Claude AI needs to resume work on the Adaptive Resume Generator project effectively.
 
 **Last Updated:** November 12, 2025
 
@@ -24,9 +24,9 @@ CRITICAL FILE HANDLING RULES:
 PROJECT CONTEXT - Read these files first:
 1. /docs/README.md
 2. /docs/product/ai_session_guide.md
-2. /docs/development/delivery_plan.md - Master implementation plan and roadmap
-2. /docs/development/status_report.md - Current status, completed work, and next tasks
-3. /docs/architecture/system_architecure.md - System architecture and design decisions
+3. /docs/development/delivery_plan.md - Master implementation plan and roadmap
+4. /docs/development/status_report.md - Current status, completed work, and next tasks
+5. /docs/architecture/system_architecture.md - System architecture and design decisions
 
 After reading, please:
 1. Summarize the current project status
@@ -39,6 +39,9 @@ If you encounter any file access issues, stop and explain the problem clearly.
 
 ---
 
+## 🛠️ File Operations Reference
+
+**Note:** The examples below show tool invocation syntax. These are not Python function calls, but examples of how to call the MCP filesystem tools with their required parameters.
 
 ### ✅ CORRECT - Always Use These Tools
 
@@ -60,14 +63,15 @@ create_file(
 
 **Reading Files:**
 ```python
-# Method 1: filesystem:read_file
+# Method 1: filesystem:read_file (recommended for Windows paths)
 filesystem:read_file(
     path="C:\\Users\\devon\\Projects\\adaptive-resume-generator\\docs\\STATUS.md"
 )
 
 # Method 2: view (with line range)
+# Note: view tool may require Unix-style path format with leading slash
 view(
-    path="C:\\Users\\devon\\Projects\\adaptive-resume-generator\\src\\file.py",
+    path="/C:\\Users\\devon\\Projects\\adaptive-resume-generator\\src\\file.py",
     view_range=[1, 50],
     description="Why viewing this"
 )
@@ -193,7 +197,7 @@ Or just have them restart their terminal/Python environment.
 - **GUI Framework:** PyQt6
 - **Database:** SQLite with SQLAlchemy ORM
 - **Migrations:** Alembic
-- **Testing:** pytest (81% coverage)
+- **Testing:** pytest (83%+ coverage, 67 tests)
 - **PDF Generation:** ReportLab (planned)
 - **NLP/Matching:** spaCy (planned)
 

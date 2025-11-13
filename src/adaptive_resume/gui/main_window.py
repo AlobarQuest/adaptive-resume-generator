@@ -10,6 +10,7 @@ try:  # pragma: no cover - import guard depends on platform runtime
     from PyQt6.QtCore import Qt
     from PyQt6.QtGui import QAction
     from PyQt6.QtWidgets import (
+        QMenuBar,
         QDialog,
         QHBoxLayout,
         QListWidget,
@@ -26,14 +27,14 @@ try:  # pragma: no cover - import guard depends on platform runtime
 except Exception as exc:  # pragma: no cover - handled during runtime import
     raise ImportError("PyQt6 is required to use the GUI components") from exc
 
-from adaptive_resume.models import Profile
+from adaptive_resume.models import Profile, BulletPoint
 from adaptive_resume.services.job_service import JobService
 from adaptive_resume.services.profile_service import ProfileService
 from adaptive_resume.services.skill_service import SkillService
 from adaptive_resume.services.education_service import EducationService
 from adaptive_resume.services.certification_service import CertificationService
 
-from .dialogs import JobDialog, ProfileDialog
+from .dialogs import JobDialog, ProfileDialog, SettingsDialog, BulletEnhancementDialog
 from .views import JobsView, SkillsSummaryView, ApplicationsView
 from .widgets import SkillsPanel, EducationPanel
 
@@ -93,6 +94,7 @@ class MainWindow(QMainWindow):
 
         self.jobs_view = JobsView()
         self.jobs_view.job_selected.connect(self._on_job_selected)
+        self.jobs_view.bullet_enhance_requested.connect(self._on_enhance_bullet)
 
         right_container = QWidget()
         right_layout = QVBoxLayout(right_container)
@@ -121,8 +123,27 @@ class MainWindow(QMainWindow):
         central.setLayout(layout)
         self.setCentralWidget(central)
 
+        self._build_menu()
         self._build_toolbars()
         self.setStatusBar(QStatusBar(self))
+
+    def _build_menu(self) -> None:
+        menubar = self.menuBar()
+        
+        # File menu
+        file_menu = menubar.addMenu("&File")
+        
+        settings_action = QAction("&Settings", self)
+        settings_action.setShortcut("Ctrl+,")
+        settings_action.triggered.connect(self._open_settings)
+        file_menu.addAction(settings_action)
+        
+        file_menu.addSeparator()
+        
+        exit_action = QAction("E&xit", self)
+        exit_action.setShortcut("Ctrl+Q")
+        exit_action.triggered.connect(self.close)
+        file_menu.addAction(exit_action)
 
     def _build_toolbars(self) -> None:
         toolbar = QToolBar("Resume Actions", self)
@@ -350,6 +371,37 @@ class MainWindow(QMainWindow):
                 content=content.strip(),
                 display_order=order,
             )
+
+    def _open_settings(self) -> None:
+        """Open the settings dialog."""
+        dialog = SettingsDialog(self)
+        dialog.exec()
+
+    def _on_enhance_bullet(self, bullet_id: int) -> None:
+        """Open bullet enhancement dialog."""
+        # Get the bullet point
+        bullet = None
+        for bp in self.job_service.session.query(BulletPoint).filter_by(id=bullet_id).all():
+            bullet = bp
+            break
+        
+        if bullet is None:
+            QMessageBox.warning(self, "Error", "Could not find bullet point.")
+            return
+        
+        # Open enhancement dialog
+        dialog = BulletEnhancementDialog(bullet.content, self)
+        if dialog.exec() == int(QDialog.DialogCode.Accepted):
+            enhanced_text = dialog.get_enhanced_text()
+            if enhanced_text:
+                # Update the bullet
+                bullet.content = enhanced_text
+                self.job_service.session.commit()
+                
+                # Refresh the display
+                job_id = bullet.job_id
+                self._on_job_selected(job_id)
+                self.statusBar().showMessage("Bullet enhanced successfully", 3000)
 
     # ------------------------------------------------------------------
     # Utility helpers

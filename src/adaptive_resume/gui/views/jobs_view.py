@@ -11,9 +11,11 @@ try:
         QListWidgetItem,
         QTextEdit,
         QVBoxLayout,
+        QHBoxLayout,
         QWidget,
         QLabel,
         QGroupBox,
+        QPushButton,
     )
 except ImportError as exc:  # pragma: no cover - handled by pytest.importorskip
     raise ImportError("PyQt6 is required to use the GUI components") from exc
@@ -25,6 +27,7 @@ class JobsView(QWidget):
     """Display jobs and their associated bullet points."""
 
     job_selected = pyqtSignal(int)
+    bullet_enhance_requested = pyqtSignal(int)  # bullet_id
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
@@ -46,8 +49,25 @@ class JobsView(QWidget):
         bullets_group = QGroupBox("Highlights")
         bullets_layout = QVBoxLayout(bullets_group)
 
+        # Bullet list and enhance button
+        bullet_controls = QHBoxLayout()
+        
         self.bullet_list = QListWidget()
-        bullets_layout.addWidget(self.bullet_list)
+        self.bullet_list.currentRowChanged.connect(self._on_bullet_selected)
+        bullet_controls.addWidget(self.bullet_list, stretch=1)
+        
+        # Enhance button (vertical layout on right)
+        button_layout = QVBoxLayout()
+        self.enhance_bullet_btn = QPushButton("✨ Enhance\nBullet")
+        self.enhance_bullet_btn.setToolTip("Enhance the selected bullet point")
+        self.enhance_bullet_btn.setMaximumWidth(80)
+        self.enhance_bullet_btn.setEnabled(False)
+        self.enhance_bullet_btn.clicked.connect(self._on_enhance_bullet_clicked)
+        button_layout.addWidget(self.enhance_bullet_btn)
+        button_layout.addStretch()
+        
+        bullet_controls.addLayout(button_layout)
+        bullets_layout.addLayout(bullet_controls)
 
         self.description = QTextEdit()
         self.description.setReadOnly(True)
@@ -110,3 +130,20 @@ class JobsView(QWidget):
         if current_item is None:
             return None
         return int(current_item.data(Qt.ItemDataRole.UserRole))
+
+    def current_bullet_id(self) -> Optional[int]:
+        """Return the currently selected bullet identifier."""
+        current_item = self.bullet_list.currentItem()
+        if current_item is None:
+            return None
+        return int(current_item.data(Qt.ItemDataRole.UserRole))
+
+    def _on_bullet_selected(self, index: int) -> None:
+        """Handle bullet selection changes."""
+        self.enhance_bullet_btn.setEnabled(index >= 0)
+
+    def _on_enhance_bullet_clicked(self) -> None:
+        """Handle enhance bullet button click."""
+        bullet_id = self.current_bullet_id()
+        if bullet_id is not None:
+            self.bullet_enhance_requested.emit(bullet_id)

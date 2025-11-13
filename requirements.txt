@@ -1,6 +1,8 @@
-﻿PyQt6==6.6.0
+PyQt6==6.6.0
 SQLAlchemy==2.0.23
 alembic==1.12.1
 reportlab==4.0.7
 spacy==3.7.2
 python-dotenv==1.0.0
+anthropic>=0.8.0
+cryptography>=41.0.0
