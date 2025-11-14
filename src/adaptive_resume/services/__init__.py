@@ -14,6 +14,7 @@ from .resume_extractor import (
     ExtractedEducation,
     ExtractedCertification
 )
+from .resume_importer import ResumeImporter, ResumeImportError
 from .nlp_analyzer import NLPAnalyzer, JobRequirements
 from .matching_engine import MatchingEngine, ScoredAccomplishment
 from .resume_generator import ResumeGenerator, TailoredResume
@@ -34,6 +35,8 @@ __all__ = [
     'ExtractedJob',
     'ExtractedEducation',
     'ExtractedCertification',
+    'ResumeImporter',
+    'ResumeImportError',
     'NLPAnalyzer',
     'JobRequirements',
     'MatchingEngine',
