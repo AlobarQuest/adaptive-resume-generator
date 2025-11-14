@@ -19,7 +19,10 @@ source venv/bin/activate  # macOS/Linux
 
 # Install dependencies
 pip install -r requirements.txt
-pip install -e .[dev,gui,pdf,nlp]
+pip install -e .[dev,gui,pdf,nlp,job-analysis]
+
+# Download spaCy language model (required for Phase 4)
+python -m spacy download en_core_web_md
 ```
 
 ### Running the Application
@@ -177,15 +180,25 @@ alembic/              # Database migrations
 - **System Architecture**: `docs/architecture/system_architecture.md` - Detailed architecture
 - **Setup Guide**: `docs/development/setup_guide.md` - Development environment setup
 - **AI Session Guide**: `docs/product/ai_session_guide.md` - Guide for AI-assisted development
+- **Status Report**: `docs/development/status_report.md` - Current project status and progress
 
 ### UI/UX Design
-- **UI Complete Specification**: `docs/design/ui_complete_specification.md` - **Primary design document** with detailed implementation plan (ready to implement)
+- **UI Complete Specification**: `docs/design/ui_complete_specification.md` - **Primary design document** with detailed implementation plan (✅ Complete)
   - Left navigation menu + right working area pattern
   - 5 main screens: Dashboard, Companies & Roles, Skills & Education, Job Posting Upload, Review & Print
   - 7-phase implementation plan (14-19 hours estimated)
 - **UI Redesign Requirements**: `docs/design/ui_redesign_requirements.md` - Requirements gathering and problem identification
 - **UI Redesign from Mockups**: `docs/design/ui_redesign_from_mockups.md` - Alternative tab-based design approach
 - **Visual Mockups**: `Visual Look and Feel Idea/` directory contains 5 UI mockup images
+
+### Phase 4: Job Posting Analysis (Ready to Start)
+- **Phase 4 Revised Plan**: `docs/development/phase_4_plan_revised.md` - **Current implementation plan** (33-37 hours, balanced approach)
+  - 6-week timeline with weekly breakdown
+  - Hybrid spaCy + AI approach for requirement extraction
+  - Full matching engine with 4-component scoring
+  - Complete UI integration
+  - All dependencies installed and verified
+- **Phase 4 Original Plan**: `docs/development/phase_4_plan.md` - Initial comprehensive plan (42-54 hours, reference only)
 
 ## Development Notes
 
