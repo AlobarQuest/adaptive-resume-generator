@@ -1,9 +1,9 @@
 # Phase 4: Job Posting Analysis - Revised Implementation Plan
 
-**Date:** November 13, 2025
+**Date:** November 14, 2025
 **Status:** Ready to Start
 **Approach:** Balanced (MVP + AI Integration)
-**Estimated Effort:** 33-37 hours (~5-6 weeks part-time)
+**Estimated Effort:** 33-37 hours (6 phases)
 
 ---
 
@@ -37,11 +37,11 @@ Based on review discussion, this plan takes a **balanced approach**:
 
 ---
 
-## Revised Timeline
+## Implementation Phases
 
-### Week 1: File Parsing & Text Extraction (5-6 hours)
+### Phase 4.1: File Parsing & Text Extraction (5-6 hours)
 
-**Phase 4.1: JobPostingParser Service**
+**Component: JobPostingParser Service**
 
 **Tasks:**
 - [ ] Create `src/adaptive_resume/services/job_posting_parser.py`
@@ -72,9 +72,9 @@ Based on review discussion, this plan takes a **balanced approach**:
 
 ---
 
-### Week 2: NLP Analysis (8-10 hours)
+### Phase 4.2: NLP Analysis (8-10 hours)
 
-**Phase 4.2: NLPAnalyzer Service with AI**
+**Component: NLPAnalyzer Service with AI**
 
 **Tasks:**
 - [ ] Create `src/adaptive_resume/services/nlp_analyzer.py`
@@ -131,9 +131,9 @@ Based on review discussion, this plan takes a **balanced approach**:
 
 ---
 
-### Week 3: Matching Engine (10-12 hours)
+### Phase 4.3: Matching Engine (10-12 hours)
 
-**Phase 4.3: MatchingEngine Service**
+**Component: MatchingEngine Service**
 
 **Tasks:**
 - [ ] Create `src/adaptive_resume/services/matching_engine.py`
@@ -195,9 +195,9 @@ Based on review discussion, this plan takes a **balanced approach**:
 
 ---
 
-### Week 4: Resume Generation & Data Models (5-6 hours)
+### Phase 4.4: Resume Generation & Data Models (5-6 hours)
 
-**Phase 4.4: ResumeGenerator Service & Database**
+**Component: ResumeGenerator Service & Database**
 
 **Tasks:**
 - [ ] Create `src/adaptive_resume/services/resume_generator.py`
@@ -248,9 +248,9 @@ Based on review discussion, this plan takes a **balanced approach**:
 
 ---
 
-### Week 5: UI Integration (8-10 hours)
+### Phase 4.5: UI Integration (8-10 hours)
 
-**Phase 4.5: Upload & Results Screens**
+**Component: Upload & Results Screens**
 
 **Tasks:**
 
@@ -328,9 +328,9 @@ Based on review discussion, this plan takes a **balanced approach**:
 
 ---
 
-### Week 6: Testing & Polish (3-4 hours)
+### Phase 4.6: Testing & Polish (3-4 hours)
 
-**Phase 4.6: Final Testing & Documentation**
+**Component: Final Testing & Documentation**
 
 **Tasks:**
 - [ ] End-to-end testing
@@ -370,16 +370,16 @@ Based on review discussion, this plan takes a **balanced approach**:
 
 ## Total Effort Breakdown
 
-| Phase | Description | Hours | Week |
-|-------|-------------|-------|------|
-| 4.1 | File Parsing | 5-6 | 1 |
-| 4.2 | NLP Analysis (with AI) | 8-10 | 2 |
-| 4.3 | Matching Engine | 10-12 | 3 |
-| 4.4 | Resume Generation & DB | 5-6 | 4 |
-| 4.5 | UI Integration | 8-10 | 5 |
-| 4.6 | Testing & Polish | 3-4 | 6 |
+| Phase | Description | Hours |
+|-------|-------------|-------|
+| 4.1 | File Parsing | 5-6 |
+| 4.2 | NLP Analysis (with AI) | 8-10 |
+| 4.3 | Matching Engine | 10-12 |
+| 4.4 | Resume Generation & DB | 5-6 |
+| 4.5 | UI Integration | 8-10 |
+| 4.6 | Testing & Polish | 3-4 |
 
-**Total: 33-37 hours** (approximately 5-6 weeks part-time)
+**Total: 33-37 hours**
 
 ---
 
@@ -551,7 +551,7 @@ CREATE TABLE tailored_resumes (
 ## Notes
 
 - **Balanced Approach:** Includes AI for accuracy, skips advanced UI for speed
-- **Timeline Realistic:** 35 hours = ~6 hours/week for 6 weeks (part-time sustainable)
+- **Timeline Realistic:** 35 hours across 6 phases (self-paced, no calendar dependencies)
 - **Iterative:** Can ship after each phase if needed
 - **Extensible:** Phase 4.5 can add advanced features without breaking existing code
 

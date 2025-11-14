@@ -193,7 +193,8 @@ alembic/              # Database migrations
 
 ### Phase 4: Job Posting Analysis (Ready to Start)
 - **Phase 4 Revised Plan**: `docs/development/phase_4_plan_revised.md` - **Current implementation plan** (33-37 hours, balanced approach)
-  - 6-week timeline with weekly breakdown
+  - 6 phases: File Parsing, NLP Analysis, Matching Engine, Resume Generation, UI Integration, Testing
+  - Self-paced implementation (no calendar timeline)
   - Hybrid spaCy + AI approach for requirement extraction
   - Full matching engine with 4-component scoring
   - Complete UI integration

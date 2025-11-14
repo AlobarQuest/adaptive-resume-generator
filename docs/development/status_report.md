@@ -73,14 +73,15 @@ The project has completed a comprehensive UI/UX redesign (Phases 1-7) implementi
 
 ### Upcoming Work
 
-**Phase 4: Job Posting Analysis (Ready to Start - 6 week plan)**
-- **Week 1:** File parsing (PDF, DOCX, TXT extraction and cleaning)
-- **Week 2:** NLP analysis (spaCy + AI hybrid requirement extraction)
-- **Week 3:** Matching engine (skill matching, semantic similarity, scoring)
-- **Week 4:** Resume generation (selection algorithm, skill coverage, database)
-- **Week 5:** UI integration (upload screen, results screen, workflow)
-- **Week 6:** Testing & polish (E2E testing, documentation)
-- **Plan:** See `docs/development/phase_4_plan_revised.md` (33-37 hours)
+**Phase 4: Job Posting Analysis (Ready to Start - 6 phases)**
+- **Phase 4.1:** File parsing (PDF, DOCX, TXT extraction and cleaning) - 5-6 hours
+- **Phase 4.2:** NLP analysis (spaCy + AI hybrid requirement extraction) - 8-10 hours
+- **Phase 4.3:** Matching engine (skill matching, semantic similarity, scoring) - 10-12 hours
+- **Phase 4.4:** Resume generation (selection algorithm, skill coverage, database) - 5-6 hours
+- **Phase 4.5:** UI integration (upload screen, results screen, workflow) - 8-10 hours
+- **Phase 4.6:** Testing & polish (E2E testing, documentation) - 3-4 hours
+- **Total:** 33-37 hours (self-paced, no calendar timeline)
+- **Plan:** See `docs/development/phase_4_plan_revised.md`
 
 **Phase 5: Review & Print**
 - Professional resume template designs
