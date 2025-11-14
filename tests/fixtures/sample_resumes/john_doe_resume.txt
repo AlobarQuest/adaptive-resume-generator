@@ -1,0 +1,66 @@
+JOHN DOE
+Senior Software Engineer
+
+Contact Information
+Email: john.doe@email.com
+Phone: (555) 123-4567
+Location: San Francisco, CA
+LinkedIn: linkedin.com/in/johndoe
+GitHub: github.com/johndoe
+
+Professional Summary
+Experienced software engineer with 8+ years of experience building scalable web applications.
+Expertise in Python, JavaScript, and cloud technologies. Passionate about clean code and agile methodologies.
+
+Work Experience
+
+Senior Software Engineer
+Tech Corp Inc. • San Francisco, CA
+January 2020 - Present
+• Led development of microservices architecture handling 10M+ daily requests
+• Reduced API response time by 40% through caching optimization
+• Mentored 5 junior engineers and conducted code reviews
+• Implemented CI/CD pipeline reducing deployment time from 2 hours to 15 minutes
+• Collaborated with product team to define technical requirements
+
+Software Engineer
+StartupXYZ • San Francisco, CA
+June 2017 - December 2019
+• Developed RESTful APIs using Python Flask and PostgreSQL
+• Built responsive front-end using React and Redux
+• Improved test coverage from 60% to 90%
+• Participated in agile sprints and daily standups
+• Deployed applications to AWS using Docker and Kubernetes
+
+Junior Developer
+WebDev Solutions • Seattle, WA
+January 2016 - May 2017
+• Maintained and enhanced existing web applications
+• Fixed bugs and implemented feature requests
+• Wrote unit tests and integration tests
+• Worked with MySQL databases and wrote optimized queries
+
+Education
+
+Bachelor of Science in Computer Science
+University of California, Berkeley
+Graduated: May 2015
+GPA: 3.7/4.0
+
+Skills
+
+Programming Languages: Python, JavaScript, TypeScript, Java, Go
+Web Frameworks: Flask, Django, React, Node.js, Express
+Databases: PostgreSQL, MySQL, MongoDB, Redis
+Cloud & DevOps: AWS, Docker, Kubernetes, Jenkins, CI/CD
+Tools: Git, JIRA, Slack, VS Code
+
+Certifications
+
+AWS Certified Solutions Architect - Associate
+Amazon Web Services
+Issued: March 2021
+
+Certified Scrum Master (CSM)
+Scrum Alliance
+Issued: June 2019

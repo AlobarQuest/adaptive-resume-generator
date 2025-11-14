@@ -1,0 +1,48 @@
+Jane Smith
+jane.smith@example.com | 650-555-0123 | New York, NY
+linkedin.com/in/janesmith | portfolio.janesmith.com
+
+SUMMARY
+Product Manager with 6 years of experience launching successful SaaS products.
+Skilled in roadmap planning, user research, and cross-functional team leadership.
+
+EXPERIENCE
+
+Senior Product Manager | CloudTech Solutions | New York, NY | 2021 - Present
+• Manage product roadmap for enterprise cloud storage platform (5M+ users)
+• Increased user engagement by 35% through data-driven feature prioritization
+• Led cross-functional team of 12 engineers, designers, and marketers
+• Launched 3 major features resulting in $2M ARR growth
+• Conducted user research interviews with 50+ enterprise clients
+
+Product Manager | Analytics Inc | Boston, MA | 2018 - 2021
+• Owned product lifecycle for business intelligence dashboard product
+• Grew monthly active users from 10K to 50K in 18 months
+• Reduced customer churn by 25% through improved onboarding flow
+• Collaborated with sales team to close 15 enterprise deals
+• Presented product demos at 3 industry conferences
+
+Associate Product Manager | StartupHub | Boston, MA | 2017 - 2018
+• Assisted senior PM with feature development and user testing
+• Analyzed user behavior data using SQL and Python
+• Created product requirement documents for 8 features
+• Coordinated with engineering team on sprint planning
+
+EDUCATION
+
+Master of Business Administration (MBA)
+Harvard Business School | 2015 - 2017
+Concentration: Entrepreneurship & Strategy
+
+Bachelor of Arts in Economics
+Stanford University | 2011 - 2015
+GPA: 3.8/4.0 | Dean's List
+
+SKILLS
+Product Management: Roadmap Planning, User Research, A/B Testing, Analytics
+Technical: SQL, Python, JIRA, Figma, Google Analytics, Mixpanel, Amplitude
+Soft Skills: Leadership, Communication, Stakeholder Management, Agile/Scrum
+
+CERTIFICATIONS
+Certified Scrum Product Owner (CSPO) - Scrum Alliance - 2020
+Product Management Certificate - General Assembly - 2017

@@ -6,6 +6,7 @@ from .skill_service import SkillService
 from .education_service import EducationService
 from .certification_service import CertificationService
 from .job_posting_parser import JobPostingParser
+from .resume_parser import ResumeParser, ResumeSections
 from .nlp_analyzer import NLPAnalyzer, JobRequirements
 from .matching_engine import MatchingEngine, ScoredAccomplishment
 from .resume_generator import ResumeGenerator, TailoredResume
@@ -19,6 +20,8 @@ __all__ = [
     'EducationService',
     'CertificationService',
     'JobPostingParser',
+    'ResumeParser',
+    'ResumeSections',
     'NLPAnalyzer',
     'JobRequirements',
     'MatchingEngine',
