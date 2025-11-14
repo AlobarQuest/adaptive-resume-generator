@@ -22,6 +22,8 @@ from adaptive_resume.models.certification import Certification
 from adaptive_resume.models.job_application import JobApplication
 from adaptive_resume.models.generated_resume import GeneratedResume, GeneratedCoverLetter
 from adaptive_resume.models.templates import ResumeTemplate, CoverLetterSection, create_default_template
+from adaptive_resume.models.job_posting import JobPosting
+from adaptive_resume.models.tailored_resume import TailoredResumeModel
 
 __all__ = [
     # Base
@@ -31,7 +33,7 @@ __all__ = [
     'drop_db',
     'get_engine',
     'close_session',
-    
+
     # Core models
     'Profile',
     'Job',
@@ -41,20 +43,24 @@ __all__ = [
     'Skill',
     'Education',
     'Certification',
-    
+
     # Application tracking
     'JobApplication',
     'GeneratedResume',
     'GeneratedCoverLetter',
-    
+
+    # Job posting analysis
+    'JobPosting',
+    'TailoredResumeModel',
+
     # Templates
     'ResumeTemplate',
     'CoverLetterSection',
-    
+
     # Utility functions
     'seed_tags',
     'create_default_template',
-    
+
     # Constants
     'PREDEFINED_TAGS',
     'SKILL_CATEGORIES',

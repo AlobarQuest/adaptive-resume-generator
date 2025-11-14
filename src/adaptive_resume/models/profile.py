@@ -53,6 +53,8 @@ class Profile(Base):
     certifications = relationship('Certification', back_populates='profile', cascade='all, delete-orphan')
     job_applications = relationship('JobApplication', back_populates='profile', cascade='all, delete-orphan')
     cover_letter_sections = relationship('CoverLetterSection', back_populates='profile', cascade='all, delete-orphan')
+    job_postings = relationship('JobPosting', back_populates='profile', cascade='all, delete-orphan')
+    tailored_resumes = relationship('TailoredResumeModel', back_populates='profile', cascade='all, delete-orphan')
     
     def __repr__(self):
         return f"<Profile(id={self.id}, name='{self.first_name} {self.last_name}', email='{self.email}')>"

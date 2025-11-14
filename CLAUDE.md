@@ -21,7 +21,7 @@ source venv/bin/activate  # macOS/Linux
 pip install -r requirements.txt
 pip install -e .[dev,gui,pdf,nlp,job-analysis]
 
-# Download spaCy language model (required for Phase 4)
+# Download spaCy language model (required for job posting analysis)
 python -m spacy download en_core_web_md
 ```
 
@@ -94,10 +94,16 @@ The application follows a strict layered architecture:
    - Each domain entity has a corresponding service (ProfileService, JobService, SkillService, etc.)
    - `ai_enhancement_service.py`: Claude API integration for bullet enhancement
    - `bullet_enhancer.py`: Rule-based bullet point enhancement
+   - **Job Posting Analysis Pipeline** (Phase 4):
+     - `job_posting_parser.py`: Parse job postings from PDF, DOCX, TXT files
+     - `nlp_analyzer.py`: Extract requirements using spaCy + AI hybrid approach
+     - `matching_engine.py`: Score accomplishments with 4-component algorithm
+     - `resume_generator.py`: Generate tailored resumes with skill coverage analysis
 
 3. **Data Layer** (`src/adaptive_resume/models/`): SQLAlchemy ORM models
    - `base.py`: Database configuration, session factory, and Base class
-   - Domain models: Profile, Job, BulletPoint, Skill, Education, Certification, JobApplication, etc.
+   - Domain models: Profile, Job, BulletPoint, Skill, Education, Certification, JobApplication
+   - **Phase 4 models**: JobPosting, TailoredResumeModel (for storing analysis results)
    - All models inherit from `Base` defined in `base.py`
 
 4. **Configuration** (`src/adaptive_resume/config/`):
@@ -191,15 +197,16 @@ alembic/              # Database migrations
 - **UI Redesign from Mockups**: `docs/design/ui_redesign_from_mockups.md` - Alternative tab-based design approach
 - **Visual Mockups**: `Visual Look and Feel Idea/` directory contains 5 UI mockup images
 
-### Phase 4: Job Posting Analysis (Ready to Start)
-- **Phase 4 Revised Plan**: `docs/development/phase_4_plan_revised.md` - **Current implementation plan** (33-37 hours, balanced approach)
+### Phase 4: Job Posting Analysis (✅ COMPLETED)
+- **Phase 4 Revised Plan**: `docs/development/phase_4_plan_revised.md` - Implementation completed successfully
   - 6 phases: File Parsing, NLP Analysis, Matching Engine, Resume Generation, UI Integration, Testing
-  - Self-paced implementation (no calendar timeline)
   - Hybrid spaCy + AI approach for requirement extraction
-  - Full matching engine with 4-component scoring
-  - Complete UI integration
-  - All dependencies installed and verified
-- **Phase 4 Original Plan**: `docs/development/phase_4_plan.md` - Initial comprehensive plan (42-54 hours, reference only)
+  - Full matching engine with 4-component scoring (skill 40%, semantic 30%, recency 20%, metrics 10%)
+  - Complete UI integration with background processing
+  - **106 tests passing** (25 parser, 28 analyzer, 34 matching, 19 generator)
+  - Database migration applied for JobPosting and TailoredResumeModel
+  - New screens: JobPostingScreen (upload/paste), TailoringResultsScreen (results display)
+- **Phase 4 Original Plan**: `docs/development/phase_4_plan.md` - Initial comprehensive plan (reference only)
 
 ## Development Notes
 
@@ -227,7 +234,8 @@ alembic/              # Database migrations
   - Dashboard (opening/stats screen)
   - Companies & Roles (primary work area with bullet enhancement)
   - Skills & Education (general info management)
-  - Job Posting Upload (Phase 4 - future)
+  - Job Posting Upload (✅ Phase 4 - implemented)
+  - Tailoring Results (✅ Phase 4 - implemented)
   - Review & Print (Phase 5 - future)
 - When implementing new UI features, align with the target design to avoid rework
 

@@ -46,6 +46,7 @@ from .screens import (
     SkillsScreen,
     JobPostingScreen,
     ReviewPrintScreen,
+    TailoringResultsScreen,
 )
 
 
@@ -130,7 +131,13 @@ class MainWindow(QMainWindow):
 
         self.upload_screen = JobPostingScreen(
             profile_service=self.profile_service,
+            job_service=self.job_service,
         )
+        self.upload_screen.tailored_resume_ready.connect(self._on_tailored_resume_ready)
+
+        self.results_screen = TailoringResultsScreen()
+        self.results_screen.generate_pdf_requested.connect(lambda: self._navigate_to("review"))
+        self.results_screen.start_over_requested.connect(lambda: self._navigate_to("upload"))
 
         self.review_screen = ReviewPrintScreen()
 
@@ -143,6 +150,7 @@ class MainWindow(QMainWindow):
             "education": self.education_screen,
             "skills": self.skills_screen,
             "upload": self.upload_screen,
+            "results": self.results_screen,
             "review": self.review_screen,
         }
 
@@ -203,6 +211,11 @@ class MainWindow(QMainWindow):
     def _on_screen_changed(self, screen_id: str) -> None:
         """Handle screen change from navigation menu."""
         self._navigate_to(screen_id, update_nav=False)
+
+    def _on_tailored_resume_ready(self, tailored_resume) -> None:
+        """Handle when tailored resume is ready from job posting analysis."""
+        self.results_screen.display_results(tailored_resume)
+        self._navigate_to("results")
 
     def _refresh_current_screen(self) -> None:
         """Refresh the current screen."""

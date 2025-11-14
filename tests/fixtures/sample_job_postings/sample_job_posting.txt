@@ -1,0 +1,44 @@
+Software Engineer - Python/Django
+
+TechCorp Inc.
+San Francisco, CA
+
+Job Description:
+
+We are seeking a talented Software Engineer to join our growing team. The ideal candidate will have strong experience with Python and Django, and a passion for building scalable web applications.
+
+Requirements:
+- 5+ years of experience in software development
+- Strong proficiency in Python and Django framework
+- Experience with RESTful API design and implementation
+- Knowledge of SQL databases (PostgreSQL, MySQL)
+- Familiarity with front-end technologies (React, Vue.js)
+- Experience with Git version control
+- Strong problem-solving skills
+- Bachelor's degree in Computer Science or related field
+
+Preferred Qualifications:
+- Experience with AWS or other cloud platforms
+- Knowledge of Docker and containerization
+- Experience with CI/CD pipelines
+- Familiarity with microservices architecture
+- Experience with Elasticsearch or similar search technologies
+
+Responsibilities:
+- Design and develop scalable web applications
+- Collaborate with cross-functional teams to define and implement new features
+- Write clean, maintainable, and well-documented code
+- Participate in code reviews and provide constructive feedback
+- Troubleshoot and debug production issues
+- Mentor junior developers
+
+We offer:
+- Competitive salary ($120,000 - $160,000)
+- Comprehensive health benefits
+- 401(k) matching
+- Flexible work arrangements
+- Professional development opportunities
+
+TechCorp is an equal opportunity employer. All qualified applicants will receive consideration for employment without regard to race, color, religion, sex, sexual orientation, gender identity, national origin, disability, or veteran status.
+
+Apply now at careers.techcorp.com

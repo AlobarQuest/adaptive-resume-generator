@@ -8,6 +8,7 @@ from .general_info_screen import GeneralInfoScreen
 from .education_screen import EducationScreen
 from .skills_screen import SkillsScreen
 from .job_posting_screen import JobPostingScreen
+from .tailoring_results_screen import TailoringResultsScreen
 from .review_print_screen import ReviewPrintScreen
 
 __all__ = [
@@ -19,5 +20,6 @@ __all__ = [
     "EducationScreen",
     "SkillsScreen",
     "JobPostingScreen",
+    "TailoringResultsScreen",
     "ReviewPrintScreen",
 ]
