@@ -185,13 +185,13 @@ Implement professional PDF resume generation using ReportLab, allowing users to 
 
 ---
 
-### Phase 5.2: Classic Template Implementation (5-6 hours)
+### Phase 5.2: Classic Template Implementation (5-6 hours) ✅ COMPLETED
 
 **Component:** Professional classic resume template
 
 **Tasks:**
-- [ ] Create `src/adaptive_resume/pdf/templates/classic_template.py`
-- [ ] Implement classic layout:
+- [x] Create `src/adaptive_resume/pdf/templates/classic_template.py`
+- [x] Implement classic layout:
   ```
   ┌─────────────────────────────────────┐
   │ JOHN DOE                            │
@@ -224,23 +224,25 @@ Implement professional PDF resume generation using ReportLab, allowing users to 
   │ AWS Certified Developer (2021)      │
   └─────────────────────────────────────┘
   ```
-- [ ] Features:
-  - Clean serif font (Times New Roman)
+- [x] Features:
+  - Clean serif font (Times-Roman/Times-Bold)
   - Traditional section headers (bold, uppercase)
   - Bullet points for accomplishments
   - Clear date formatting
   - Skills as comma-separated list or grouped
   - Single column layout
   - Professional spacing and margins
-- [ ] Register with TemplateRegistry
-- [ ] Write unit tests
+- [x] Register with TemplateRegistry
+- [x] Write unit tests (30 comprehensive tests)
 
-**Deliverable:** Professional classic template ready to use
+**Deliverable:** Professional classic template ready to use ✅
 
 **Files Created:**
-- `src/adaptive_resume/pdf/templates/__init__.py`
-- `src/adaptive_resume/pdf/templates/classic_template.py`
-- `tests/unit/test_classic_template.py`
+- ✅ `src/adaptive_resume/pdf/templates/__init__.py`
+- ✅ `src/adaptive_resume/pdf/templates/classic_template.py` (640 lines)
+- ✅ `tests/unit/test_classic_template.py` (30 tests)
+
+**Tests:** 87 passing total (34 utils + 23 base/registry + 30 classic template)
 
 ---
 

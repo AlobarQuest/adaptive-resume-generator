@@ -108,9 +108,10 @@ The project has completed a comprehensive UI/UX redesign (Phases 1-7), the full 
 - Comprehensive test coverage
 
 ### In Progress
-- **Phase 5: Resume Generation & PDF Printing** (In Progress - Phase 5.1 complete)
+- **Phase 5: Resume Generation & PDF Printing** (In Progress - Phase 5.1-5.2 complete)
   - ✅ Phase 5.1: PDF Template Foundation (57 tests passing)
-  - 🔄 Phase 5.2: Classic Template Implementation (next)
+  - ✅ Phase 5.2: Classic Template Implementation (87 tests passing)
+  - 🔄 Phase 5.3: Resume PDF Generator Service (next)
 
 ### Upcoming Work
 
@@ -238,6 +239,23 @@ The project has completed a comprehensive UI/UX redesign (Phases 1-7), the full 
 - [CLAUDE.md](../../CLAUDE.md) - Development guide for AI assistants
 
 ## Changelog
+
+### 2025-11-14 (Phase 5.2: Classic Template Implementation)
+- ✅ **Phase 5.2:** Classic Template Implementation completed (87 tests passing)
+- Created professional traditional resume template with serif fonts
+- **ClassicTemplate:** Full implementation with all resume sections
+- **Font Variant System:** Proper ReportLab font mapping (Times-Roman → Times-Bold)
+- **Resume Sections:** Header, Summary, Experience, Education, Skills, Certifications
+- **Experience Section:** Company grouping, date sorting, bullet points with text wrapping
+- **Education Section:** Degree/institution, GPA, graduation dates
+- **Skills Section:** Comma-separated list with text wrapping
+- **Certifications Section:** Credential details with dates
+- **Page Break Handling:** Multi-page support with automatic page breaks
+- Files created: classic_template.py (640 lines), test_classic_template.py (30 tests)
+- Tests: 87 passing (34 PDF utils, 23 base template/registry, 30 classic template)
+- Template auto-registered with TemplateRegistry via decorator
+- Ready for PDF Generation Service (Phase 5.3)
+- Updated phase_5_resume_pdf_plan.md to mark Phase 5.2 complete
 
 ### 2025-11-14 (Phase 5.1: PDF Template Foundation)
 - ✅ **Phase 5.1:** PDF Template Foundation completed (57 tests passing)
