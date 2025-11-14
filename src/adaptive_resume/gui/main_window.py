@@ -23,6 +23,7 @@ try:  # pragma: no cover - import guard depends on platform runtime
         QToolBar,
         QVBoxLayout,
         QWidget,
+        QStackedWidget,
     )
 except Exception as exc:  # pragma: no cover - handled during runtime import
     raise ImportError("PyQt6 is required to use the GUI components") from exc
@@ -34,13 +35,22 @@ from adaptive_resume.services.skill_service import SkillService
 from adaptive_resume.services.education_service import EducationService
 from adaptive_resume.services.certification_service import CertificationService
 
-from .dialogs import JobDialog, ProfileDialog, SettingsDialog, BulletEnhancementDialog
-from .views import JobsView, SkillsSummaryView, ApplicationsView
-from .widgets import SkillsPanel, EducationPanel
+from .dialogs import JobDialog, ProfileDialog, SettingsDialog, BulletEnhancementDialog, CompanyDialog, CompanyData
+from .widgets import NavigationMenu
+from .screens import (
+    DashboardScreen,
+    ProfileManagementScreen,
+    CompaniesRolesScreen,
+    GeneralInfoScreen,
+    EducationScreen,
+    SkillsScreen,
+    JobPostingScreen,
+    ReviewPrintScreen,
+)
 
 
 class MainWindow(QMainWindow):
-    """Top-level window coordinating navigation between resume editors."""
+    """Top-level window with navigation menu and screen-based interface."""
 
     def __init__(
         self,
@@ -63,168 +73,242 @@ class MainWindow(QMainWindow):
         self.resize(1200, 720)
 
         self._setup_ui()
-        self._load_profiles()
+        self._load_initial_profile()
 
     # ------------------------------------------------------------------
     # UI construction helpers
     # ------------------------------------------------------------------
     def _setup_ui(self) -> None:
+        """Setup the main UI with navigation menu and stacked screens."""
         central = QWidget(self)
         layout = QHBoxLayout(central)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
-        self.profile_list = QListWidget()
-        self.profile_list.currentItemChanged.connect(self._on_profile_selected)
+        # Left navigation menu
+        self.nav_menu = NavigationMenu()
+        self.nav_menu.screen_changed.connect(self._on_screen_changed)
+        layout.addWidget(self.nav_menu)
 
-        left_panel = QVBoxLayout()
-        left_panel.addWidget(self.profile_list)
+        # Right side - stacked screens
+        self.stacked_widget = QStackedWidget()
 
-        profile_buttons = QHBoxLayout()
-        self.add_profile_button = QPushButton("Add Profile")
-        self.edit_profile_button = QPushButton("Edit Profile")
-        self.add_profile_button.clicked.connect(self._add_profile)
-        self.edit_profile_button.clicked.connect(self._edit_profile)
-        profile_buttons.addWidget(self.add_profile_button)
-        profile_buttons.addWidget(self.edit_profile_button)
-        left_panel.addLayout(profile_buttons)
+        # Create all screens
+        self.dashboard_screen = DashboardScreen(
+            profile_service=self.profile_service,
+            job_service=self.job_service,
+            skill_service=self.skill_service,
+            education_service=self.education_service,
+        )
+        self.dashboard_screen.navigate_to_upload.connect(lambda: self._navigate_to("upload"))
+        self.dashboard_screen.navigate_to_companies.connect(lambda: self._navigate_to("companies"))
+        self.dashboard_screen.navigate_to_general.connect(lambda: self._navigate_to("general"))
 
-        layout.addLayout(left_panel, 1)
+        self.profile_screen = ProfileManagementScreen(
+            profile_service=self.profile_service,
+        )
+        self.profile_screen.select_profile_requested.connect(self._set_current_profile)
+        self.profile_screen.add_profile_requested.connect(self._add_profile)
+        self.profile_screen.edit_profile_requested.connect(self._edit_profile)
 
-        splitter = QSplitter()
-        splitter.setOrientation(Qt.Orientation.Horizontal)
+        self.companies_screen = CompaniesRolesScreen(
+            job_service=self.job_service,
+        )
 
-        self.jobs_view = JobsView()
-        self.jobs_view.job_selected.connect(self._on_job_selected)
-        self.jobs_view.bullet_enhance_requested.connect(self._on_enhance_bullet)
+        self.general_screen = GeneralInfoScreen(
+            skill_service=self.skill_service,
+            education_service=self.education_service,
+        )
 
-        right_container = QWidget()
-        right_layout = QVBoxLayout(right_container)
-        right_layout.addWidget(self.jobs_view)
+        self.education_screen = EducationScreen(
+            education_service=self.education_service,
+        )
 
-        details_splitter = QSplitter()
-        details_splitter.setOrientation(Qt.Orientation.Horizontal)
+        self.skills_screen = SkillsScreen(
+            skill_service=self.skill_service,
+        )
 
-        self.skills_panel = SkillsPanel(self.skill_service)
-        self.education_panel = EducationPanel(self.education_service)
-        self.skills_summary_view = SkillsSummaryView()
-        self.applications_view = ApplicationsView()
+        self.upload_screen = JobPostingScreen(
+            profile_service=self.profile_service,
+        )
 
-        details_splitter.addWidget(self.skills_panel)
-        details_splitter.addWidget(self.education_panel)
-        details_splitter.addWidget(self.skills_summary_view)
+        self.review_screen = ReviewPrintScreen()
 
-        right_layout.addWidget(details_splitter)
-        right_layout.addWidget(self.applications_view)
+        # Add screens to stacked widget
+        self.screens = {
+            "dashboard": self.dashboard_screen,
+            "profile": self.profile_screen,
+            "companies": self.companies_screen,
+            "general": self.general_screen,
+            "education": self.education_screen,
+            "skills": self.skills_screen,
+            "upload": self.upload_screen,
+            "review": self.review_screen,
+        }
 
-        splitter.addWidget(self.jobs_view)
-        splitter.addWidget(right_container)
+        for screen in self.screens.values():
+            self.stacked_widget.addWidget(screen)
 
-        layout.addWidget(splitter, 3)
+        layout.addWidget(self.stacked_widget)
 
         central.setLayout(layout)
         self.setCentralWidget(central)
 
-        self._build_menu()
-        self._build_toolbars()
+        # Connect signals from companies screen (for job/bullet management)
+        jobs_view = self.companies_screen.get_jobs_view()
+        jobs_view.job_selected.connect(self._on_job_selected)
+        jobs_view.bullet_enhance_requested.connect(self._on_enhance_bullet)
+        self.companies_screen.add_job_requested.connect(self._add_job)
+        self.companies_screen.edit_job_requested.connect(self._edit_job)
+
+        # Connect signals for company management
+        self.companies_screen.edit_company_requested.connect(self._edit_company)
+        self.companies_screen.delete_company_requested.connect(self._delete_company)
+
+        # Hide menu bar completely - navigation only
+        self.menuBar().hide()
+
+        # Status bar only
         self.setStatusBar(QStatusBar(self))
 
-    def _build_menu(self) -> None:
-        menubar = self.menuBar()
-        
-        # File menu
-        file_menu = menubar.addMenu("&File")
-        
-        settings_action = QAction("&Settings", self)
-        settings_action.setShortcut("Ctrl+,")
-        settings_action.triggered.connect(self._open_settings)
-        file_menu.addAction(settings_action)
-        
-        file_menu.addSeparator()
-        
-        exit_action = QAction("E&xit", self)
-        exit_action.setShortcut("Ctrl+Q")
-        exit_action.triggered.connect(self.close)
-        file_menu.addAction(exit_action)
+        # Set initial screen
+        self._navigate_to("dashboard")
 
-    def _build_toolbars(self) -> None:
-        toolbar = QToolBar("Resume Actions", self)
-        toolbar.setMovable(False)
-        self.addToolBar(Qt.ToolBarArea.TopToolBarArea, toolbar)
-
-        add_job_action = QAction("Add Job", self)
-        add_job_action.triggered.connect(self._add_job)
-        toolbar.addAction(add_job_action)
-
-        edit_job_action = QAction("Edit Job", self)
-        edit_job_action.triggered.connect(self._edit_job)
-        toolbar.addAction(edit_job_action)
-
-        toolbar.addSeparator()
-
-        refresh_action = QAction("Refresh", self)
-        refresh_action.triggered.connect(self._refresh_current_profile)
-        toolbar.addAction(refresh_action)
 
     # ------------------------------------------------------------------
-    # Data loading helpers
+    # Navigation
     # ------------------------------------------------------------------
-    def _load_profiles(self) -> None:
-        self.profile_list.clear()
+    def _navigate_to(self, screen_id: str, update_nav: bool = True) -> None:
+        """Navigate to a screen.
+
+        Args:
+            screen_id: The ID of the screen to navigate to
+            update_nav: Whether to update the navigation menu (False when called from nav menu)
+        """
+        if screen_id == "settings":
+            self._open_settings()
+            return
+
+        if screen_id in self.screens:
+            screen = self.screens[screen_id]
+            self.stacked_widget.setCurrentWidget(screen)
+            if update_nav:
+                # Only update nav menu if not already coming from nav menu click
+                # Temporarily disconnect to avoid recursion
+                self.nav_menu.screen_changed.disconnect(self._on_screen_changed)
+                self.nav_menu.set_current_screen(screen_id)
+                self.nav_menu.screen_changed.connect(self._on_screen_changed)
+            screen.on_screen_shown()
+
+    def _on_screen_changed(self, screen_id: str) -> None:
+        """Handle screen change from navigation menu."""
+        self._navigate_to(screen_id, update_nav=False)
+
+    def _refresh_current_screen(self) -> None:
+        """Refresh the current screen."""
+        current_screen = self.stacked_widget.currentWidget()
+        if hasattr(current_screen, 'on_screen_shown'):
+            current_screen.on_screen_shown()
+
+    # ------------------------------------------------------------------
+    # Profile management
+    # ------------------------------------------------------------------
+    def _load_initial_profile(self) -> None:
+        """Load the first available profile or create one."""
         profiles = (
             self.profile_service.session.query(Profile)
             .order_by(Profile.last_name.asc(), Profile.first_name.asc())
             .all()
         )
+
+        if profiles:
+            self._set_current_profile(profiles[0].id)
+        else:
+            self.current_profile_id = None
+            self._update_window_title()
+
+    def _show_profile_selector(self) -> None:
+        """Show profile selector dialog."""
+        # Create a simple profile selector dialog
+        from PyQt6.QtWidgets import QDialog, QVBoxLayout, QListWidget, QPushButton, QHBoxLayout
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Select Profile")
+        dialog.setMinimumWidth(400)
+        dialog.setMinimumHeight(300)
+
+        layout = QVBoxLayout(dialog)
+
+        # Profile list
+        profile_list = QListWidget()
+        profiles = (
+            self.profile_service.session.query(Profile)
+            .order_by(Profile.last_name.asc(), Profile.first_name.asc())
+            .all()
+        )
+
         for profile in profiles:
             label = f"{profile.first_name} {profile.last_name}"
             item = QListWidgetItem(label)
             item.setData(Qt.ItemDataRole.UserRole, profile.id)
-            self.profile_list.addItem(item)
+            profile_list.addItem(item)
 
-        if profiles:
-            self.profile_list.setCurrentRow(0)
-        else:
-            self.current_profile_id = None
-            self.jobs_view.set_jobs([])
-            self.skills_panel.load_skills(None)
-            self.education_panel.load_education(None)
-            self.skills_summary_view.set_skills([])
+            if profile.id == self.current_profile_id:
+                profile_list.setCurrentItem(item)
 
-    def _refresh_current_profile(self) -> None:
-        if self.current_profile_id is not None:
-            self._load_profile_details(self.current_profile_id)
+        layout.addWidget(profile_list)
 
-    def _on_profile_selected(self, current: Optional[QListWidgetItem]) -> None:
-        if current is None:
-            self.current_profile_id = None
-            return
+        # Buttons
+        button_layout = QHBoxLayout()
 
-        profile_id = int(current.data(Qt.ItemDataRole.UserRole))
+        select_btn = QPushButton("Select")
+        select_btn.setDefault(True)
+        select_btn.clicked.connect(dialog.accept)
+        button_layout.addWidget(select_btn)
+
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.clicked.connect(dialog.reject)
+        button_layout.addWidget(cancel_btn)
+
+        layout.addLayout(button_layout)
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            current_item = profile_list.currentItem()
+            if current_item:
+                profile_id = int(current_item.data(Qt.ItemDataRole.UserRole))
+                self._set_current_profile(profile_id)
+
+    def _set_current_profile(self, profile_id: int) -> None:
+        """Set the current profile and update all screens."""
         self.current_profile_id = profile_id
-        self._load_profile_details(profile_id)
+        self._update_window_title()
+
+        # Update all screens with the new profile
+        for screen in self.screens.values():
+            if hasattr(screen, 'set_profile'):
+                screen.set_profile(profile_id)
+
+        # Refresh current screen
+        self._refresh_current_screen()
+
         self.statusBar().showMessage(f"Loaded profile #{profile_id}", 3000)
 
-    def _load_profile_details(self, profile_id: int) -> None:
-        jobs = self.job_service.get_jobs_for_profile(profile_id)
-        self.jobs_view.set_jobs(jobs)
-        self.skills_panel.load_skills(profile_id)
-        self.education_panel.load_education(profile_id)
-
-        skills = self.skill_service.list_skills_for_profile(profile_id)
-        self.skills_summary_view.set_skills(skills)
-
-    def _on_job_selected(self, job_id: int) -> None:
-        if job_id <= 0:
-            self.jobs_view.show_job_details(None, [])
-            return
-
-        job = self.job_service.get_job_by_id(job_id)
-        bullets = self.job_service.get_bullet_points_for_job(job_id)
-        self.jobs_view.show_job_details(job, bullets)
+    def _update_window_title(self) -> None:
+        """Update window title with current profile name."""
+        if self.current_profile_id:
+            profile = self.profile_service.get_profile_by_id(self.current_profile_id)
+            if profile:
+                self.setWindowTitle(
+                    f"Adaptive Resume Generator - {profile.first_name} {profile.last_name}"
+                )
+        else:
+            self.setWindowTitle("Adaptive Resume Generator")
 
     # ------------------------------------------------------------------
     # Dialog helpers
     # ------------------------------------------------------------------
     def _add_profile(self) -> None:
+        """Add a new profile."""
         dialog = ProfileDialog(self)
         if dialog.exec() == int(QDialog.DialogCode.Accepted):
             data = dialog.get_result()
@@ -240,16 +324,18 @@ class MainWindow(QMainWindow):
                     portfolio_url=data.portfolio_url or None,
                     professional_summary=data.professional_summary or None,
                 )
-            except Exception as exc:  # pragma: no cover - relies on PyQt runtime
+            except Exception as exc:  # pragma: no cover
                 QMessageBox.critical(self, "Error", str(exc))
                 return
 
-            self._load_profiles()
-            self._select_profile(profile.id)
+            self._set_current_profile(profile.id)
+            self.statusBar().showMessage("Profile created successfully", 3000)
 
     def _edit_profile(self) -> None:
+        """Edit the current profile."""
         profile_id = self.current_profile_id
         if profile_id is None:
+            QMessageBox.information(self, "No Profile", "Please select a profile first.")
             return
 
         profile = self.profile_service.get_profile_by_id(profile_id)
@@ -282,14 +368,16 @@ class MainWindow(QMainWindow):
                     portfolio_url=data.portfolio_url or None,
                     professional_summary=data.professional_summary or None,
                 )
-            except Exception as exc:  # pragma: no cover - relies on PyQt runtime
+            except Exception as exc:  # pragma: no cover
                 QMessageBox.critical(self, "Error", str(exc))
                 return
 
-            self._load_profiles()
-            self._select_profile(profile_id)
+            self._update_window_title()
+            self._refresh_current_screen()
+            self.statusBar().showMessage("Profile updated successfully", 3000)
 
     def _add_job(self) -> None:
+        """Add a new job."""
         if self.current_profile_id is None:
             QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
             return
@@ -314,13 +402,23 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(self, "Error", str(exc))
                 return
 
-            self._load_profile_details(self.current_profile_id)
-            self._select_job(job.id)
+            # Navigate to companies screen and refresh
+            self._navigate_to("companies")
+            self.companies_screen.on_screen_shown()
+            self.statusBar().showMessage("Job created successfully", 3000)
 
     def _edit_job(self) -> None:
+        """Edit the selected job."""
         profile_id = self.current_profile_id
-        job_id = self.jobs_view.current_job_id()
-        if profile_id is None or job_id is None:
+        if profile_id is None:
+            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
+            return
+
+        # Get current job from companies screen
+        jobs_view = self.companies_screen.get_jobs_view()
+        job_id = jobs_view.current_job_id()
+        if job_id is None:
+            QMessageBox.information(self, "No Job Selected", "Please select a job to edit.")
             return
 
         job = self.job_service.get_job_by_id(job_id)
@@ -355,10 +453,101 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(self, "Error", str(exc))
                 return
 
-            self._load_profile_details(profile_id)
-            self._select_job(job_id)
+            self.companies_screen.on_screen_shown()
+            self._on_job_selected(job_id)
+            self.statusBar().showMessage("Job updated successfully", 3000)
+
+    def _edit_company(self) -> None:
+        """Edit a company's information."""
+        # Get selected company from companies screen
+        if not hasattr(self.companies_screen, 'selected_company') or not self.companies_screen.selected_company:
+            QMessageBox.information(self, "No Company Selected", "Please select a company to edit.")
+            return
+
+        company_name = self.companies_screen.selected_company
+
+        # Get the first job for this company to get location info
+        jobs_for_company = [
+            job for job in self.companies_screen.all_jobs
+            if job.company_name == company_name
+        ]
+
+        if not jobs_for_company:
+            QMessageBox.warning(self, "Error", "No jobs found for this company.")
+            return
+
+        current_location = jobs_for_company[0].location or ""
+
+        dialog = CompanyDialog(
+            self,
+            company_name=company_name,
+            company_location=current_location,
+        )
+
+        if dialog.exec() == int(QDialog.DialogCode.Accepted):
+            data = dialog.get_result()
+
+            # Update all jobs for this company with new name and location
+            try:
+                for job in jobs_for_company:
+                    self.job_service.update_job(
+                        job_id=job.id,
+                        company_name=data.name,
+                        location=data.location or None,
+                    )
+
+                self.companies_screen.on_screen_shown()
+                self.statusBar().showMessage(f"Company '{data.name}' updated successfully", 3000)
+            except Exception as exc:
+                QMessageBox.critical(self, "Error", f"Failed to update company: {str(exc)}")
+
+    def _delete_company(self) -> None:
+        """Delete a company and all its associated jobs."""
+        # Get selected company from companies screen
+        if not hasattr(self.companies_screen, 'selected_company') or not self.companies_screen.selected_company:
+            QMessageBox.information(self, "No Company Selected", "Please select a company to delete.")
+            return
+
+        company_name = self.companies_screen.selected_company
+
+        # Get all jobs for this company
+        jobs_for_company = [
+            job for job in self.companies_screen.all_jobs
+            if job.company_name == company_name
+        ]
+
+        if not jobs_for_company:
+            QMessageBox.warning(self, "Error", "No jobs found for this company.")
+            return
+
+        # Confirm deletion
+        reply = QMessageBox.question(
+            self,
+            "Confirm Delete",
+            f"Delete company '{company_name}' and all {len(jobs_for_company)} associated role(s)?\n\n"
+            "This action cannot be undone.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            try:
+                for job in jobs_for_company:
+                    # Delete all bullets for this job first
+                    bullets = self.job_service.get_bullet_points_for_job(job.id)
+                    for bullet in bullets:
+                        self.job_service.delete_bullet_point(bullet.id)
+
+                    # Delete the job
+                    self.job_service.delete_job(job.id)
+
+                self.companies_screen.on_screen_shown()
+                self.statusBar().showMessage(f"Company '{company_name}' and all roles deleted", 3000)
+            except Exception as exc:
+                QMessageBox.critical(self, "Error", f"Failed to delete company: {str(exc)}")
 
     def _sync_bullets(self, job_id: int, bullets: list[str]) -> None:
+        """Sync bullet points for a job."""
         existing = self.job_service.get_bullet_points_for_job(job_id)
         for bullet in existing:
             self.job_service.delete_bullet_point(bullet.id)
@@ -384,11 +573,11 @@ class MainWindow(QMainWindow):
         for bp in self.job_service.session.query(BulletPoint).filter_by(id=bullet_id).all():
             bullet = bp
             break
-        
+
         if bullet is None:
             QMessageBox.warning(self, "Error", "Could not find bullet point.")
             return
-        
+
         # Open enhancement dialog
         dialog = BulletEnhancementDialog(bullet.content, self)
         if dialog.exec() == int(QDialog.DialogCode.Accepted):
@@ -397,28 +586,21 @@ class MainWindow(QMainWindow):
                 # Update the bullet
                 bullet.content = enhanced_text
                 self.job_service.session.commit()
-                
+
                 # Refresh the display
                 job_id = bullet.job_id
                 self._on_job_selected(job_id)
                 self.statusBar().showMessage("Bullet enhanced successfully", 3000)
 
-    # ------------------------------------------------------------------
-    # Utility helpers
-    # ------------------------------------------------------------------
-    def _select_profile(self, profile_id: int) -> None:
-        for index in range(self.profile_list.count()):
-            item = self.profile_list.item(index)
-            if int(item.data(Qt.ItemDataRole.UserRole)) == profile_id:
-                self.profile_list.setCurrentRow(index)
-                return
+    def _on_job_selected(self, job_id: int) -> None:
+        """Handle job selection."""
+        if job_id <= 0:
+            return
 
-    def _select_job(self, job_id: int) -> None:
-        for index in range(self.jobs_view.job_list.count()):
-            item = self.jobs_view.job_list.item(index)
-            if int(item.data(Qt.ItemDataRole.UserRole)) == job_id:
-                self.jobs_view.job_list.setCurrentRow(index)
-                return
+        jobs_view = self.companies_screen.get_jobs_view()
+        job = self.job_service.get_job_by_id(job_id)
+        bullets = self.job_service.get_bullet_points_for_job(job_id)
+        jobs_view.show_job_details(job, bullets)
 
 
 __all__ = ["MainWindow"]
