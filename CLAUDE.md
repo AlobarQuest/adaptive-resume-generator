@@ -197,6 +197,15 @@ alembic/              # Database migrations
 - **UI Redesign from Mockups**: `docs/design/ui_redesign_from_mockups.md` - Alternative tab-based design approach
 - **Visual Mockups**: `Visual Look and Feel Idea/` directory contains 5 UI mockup images
 
+### Phase 3.6: Resume Import & Auto-Population (Ready to Start)
+- **Phase 3.6 Plan**: `docs/development/phase_3_6_resume_import_plan.md` - Resume import implementation plan (20-26 hours)
+  - 5 phases: Resume Parser Extension, Resume Extractor Service, Resume Importer Service, UI Integration, Testing
+  - Hybrid spaCy + AI extraction for contact info, work history, education, skills, certifications
+  - Preview/confirmation workflow with editing capabilities
+  - Reuses Phase 4 parsing infrastructure
+  - Intelligent deduplication to avoid duplicate companies/skills
+  - Dramatically improves onboarding time (<5 minutes vs 30+ minutes manual entry)
+
 ### Phase 4: Job Posting Analysis (✅ COMPLETED)
 - **Phase 4 Revised Plan**: `docs/development/phase_4_plan_revised.md` - Implementation completed successfully
   - 6 phases: File Parsing, NLP Analysis, Matching Engine, Resume Generation, UI Integration, Testing

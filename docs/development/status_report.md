@@ -87,13 +87,22 @@ The project has completed a comprehensive UI/UX redesign (Phases 1-7) and the fu
 - Comprehensive test coverage
 
 ### In Progress
-- **Phase 5 Planning:** Resume generation and PDF printing (next major feature)
+- **Phase 3.6 Planning:** Resume import and auto-population (high priority onboarding feature)
 - **Documentation:** Update remaining docs with Phase 4 completion
 - **Testing:** User acceptance testing of job posting analysis workflow
 
 ### Upcoming Work
 
-**Phase 5: Resume Generation & PDF Printing (Next Priority)**
+**Phase 3.6: Resume Import & Auto-Population (High Priority - 20-26 hours)**
+- **Resume Parser Extension:** Reuse Phase 4 parsing for resumes
+- **Resume Extractor Service:** Extract contact info, work history, education, skills, certifications using hybrid spaCy + AI
+- **Resume Importer Service:** Map extracted data to Profile/Job/Education/Skill models with intelligent deduplication
+- **UI Integration:** Import dialog with file upload, preview/confirmation screen with editing
+- **Testing & Polish:** Test with 10+ real resumes, accuracy verification, documentation
+- **User Value:** Reduce onboarding time from 30+ minutes to <5 minutes
+- **Plan:** See `docs/development/phase_3_6_resume_import_plan.md`
+
+**Phase 5: Resume Generation & PDF Printing (Next After 3.6)**
 - Professional resume template designs
 - Live preview with ReportLab
 - PDF export functionality
@@ -169,18 +178,25 @@ The project has completed a comprehensive UI/UX redesign (Phases 1-7) and the fu
 ### Immediate (Week of 2025-11-14)
 1. ✅ Complete Phase 4: Job Posting Analysis (all 6 sub-phases)
 2. ✅ Git commit all Phase 4 changes
-3. Update README with Phase 4 features and screenshots
-4. User acceptance testing of job posting workflow
-5. Gather feedback on matching accuracy and recommendations
+3. ✅ Plan Phase 3.6: Resume Import & Auto-Population
+4. Update README with Phase 4 features and screenshots
+5. User acceptance testing of job posting workflow
+6. Start Phase 3.6.1: Resume Parser Extension
 
 ### Short Term (Next 2-4 Weeks)
-1. Plan Phase 5: Resume Generation & PDF Printing
+1. Complete Phase 3.6: Resume Import & Auto-Population
+   - Resume parser extension (reuse Phase 4 infrastructure)
+   - Resume extractor with spaCy + AI
+   - Resume importer with deduplication
+   - Import dialog and preview screen
+   - Testing with 10+ real resumes
+2. Plan Phase 5: Resume Generation & PDF Printing
    - Design professional resume templates
    - Integrate ReportLab for PDF generation
    - Build live preview functionality
    - Add print support
-2. Fine-tune matching engine weights based on user feedback
-3. Performance optimization for large job posting datasets
+3. Fine-tune matching engine weights based on user feedback
+4. Performance optimization for large job posting datasets
 
 ### Medium Term (Next 1-2 Months)
 1. Complete Phase 5: Resume generation and printing
@@ -203,6 +219,16 @@ The project has completed a comprehensive UI/UX redesign (Phases 1-7) and the fu
 - [CLAUDE.md](../../CLAUDE.md) - Development guide for AI assistants
 
 ## Changelog
+
+### 2025-11-14 (Phase 3.6 Planning)
+- Created comprehensive implementation plan for Phase 3.6: Resume Import & Auto-Population
+- 5 phases planned: Parser Extension, Extractor Service, Importer Service, UI Integration, Testing
+- Estimated effort: 20-26 hours
+- Reuses Phase 4 parsing infrastructure for efficiency
+- Hybrid spaCy + AI extraction approach
+- Preview/confirmation workflow with editing capabilities
+- High priority onboarding feature to reduce setup time from 30+ minutes to <5 minutes
+- Updated CLAUDE.md and status_report.md with Phase 3.6 information
 
 ### 2025-11-14 (Phase 4 Completion)
 - ✅ **Phase 4.1:** Job posting parser with PDF, DOCX, TXT support (25 tests)
