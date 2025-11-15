@@ -35,7 +35,15 @@ from adaptive_resume.services.skill_service import SkillService
 from adaptive_resume.services.education_service import EducationService
 from adaptive_resume.services.certification_service import CertificationService
 
-from .dialogs import JobDialog, ProfileDialog, SettingsDialog, BulletEnhancementDialog, CompanyDialog, CompanyData
+from .dialogs import (
+    JobDialog,
+    ProfileDialog,
+    SettingsDialog,
+    BulletEnhancementDialog,
+    CompanyDialog,
+    CompanyData,
+    ResumePDFPreviewDialog,
+)
 from .widgets import NavigationMenu
 from .screens import (
     DashboardScreen,
@@ -69,6 +77,7 @@ class MainWindow(QMainWindow):
         self.education_service = education_service or EducationService(profile_service.session)
         self.certification_service = certification_service or CertificationService(profile_service.session)
         self.current_profile_id: Optional[int] = None
+        self.current_tailored_resume_id: Optional[int] = None
 
         self.setWindowTitle("Adaptive Resume Generator")
         self.resize(1200, 720)
@@ -136,7 +145,7 @@ class MainWindow(QMainWindow):
         self.upload_screen.tailored_resume_ready.connect(self._on_tailored_resume_ready)
 
         self.results_screen = TailoringResultsScreen()
-        self.results_screen.generate_pdf_requested.connect(lambda: self._navigate_to("review"))
+        self.results_screen.generate_pdf_requested.connect(self._generate_pdf_resume)
         self.results_screen.start_over_requested.connect(lambda: self._navigate_to("upload"))
 
         self.review_screen = ReviewPrintScreen()
@@ -214,6 +223,7 @@ class MainWindow(QMainWindow):
 
     def _on_tailored_resume_ready(self, tailored_resume) -> None:
         """Handle when tailored resume is ready from job posting analysis."""
+        self.current_tailored_resume_id = tailored_resume.id
         self.results_screen.display_results(tailored_resume)
         self._navigate_to("results")
 
@@ -578,6 +588,29 @@ class MainWindow(QMainWindow):
         """Open the settings dialog."""
         dialog = SettingsDialog(self)
         dialog.exec()
+
+    def _generate_pdf_resume(self) -> None:
+        """Open PDF preview dialog for current tailored resume."""
+        if not self.current_tailored_resume_id:
+            QMessageBox.warning(
+                self,
+                "No Resume Ready",
+                "Please analyze a job posting first to generate a tailored resume."
+            )
+            return
+
+        try:
+            dialog = ResumePDFPreviewDialog(
+                tailored_resume_id=self.current_tailored_resume_id,
+                parent=self
+            )
+            dialog.exec()
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "PDF Generation Error",
+                f"An error occurred while opening the PDF preview:\n\n{str(e)}"
+            )
 
     def _on_enhance_bullet(self, bullet_id: int) -> None:
         """Open bullet enhancement dialog."""

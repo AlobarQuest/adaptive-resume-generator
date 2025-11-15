@@ -7,6 +7,7 @@ from .bullet_enhancement_dialog import BulletEnhancementDialog
 from .company_dialog import CompanyDialog, CompanyData
 from .resume_import_dialog import ResumeImportDialog
 from .resume_preview_dialog import ResumePreviewDialog
+from .resume_pdf_preview_dialog import ResumePDFPreviewDialog
 
 __all__ = [
     "ProfileDialog",
@@ -17,4 +18,5 @@ __all__ = [
     "CompanyData",
     "ResumeImportDialog",
     "ResumePreviewDialog",
+    "ResumePDFPreviewDialog",
 ]
