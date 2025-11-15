@@ -8,6 +8,9 @@ from .company_dialog import CompanyDialog, CompanyData
 from .resume_import_dialog import ResumeImportDialog
 from .resume_preview_dialog import ResumePreviewDialog
 from .resume_pdf_preview_dialog import ResumePDFPreviewDialog
+from .education_dialog import EducationDialog
+from .skill_dialog import SkillDialog
+from .recently_deleted_dialog import RecentlyDeletedDialog
 
 __all__ = [
     "ProfileDialog",
@@ -19,4 +22,7 @@ __all__ = [
     "ResumeImportDialog",
     "ResumePreviewDialog",
     "ResumePDFPreviewDialog",
+    "EducationDialog",
+    "SkillDialog",
+    "RecentlyDeletedDialog",
 ]

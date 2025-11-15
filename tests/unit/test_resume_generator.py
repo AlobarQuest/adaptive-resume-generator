@@ -363,7 +363,7 @@ class TestResumeGeneratorGeneration:
         """Create a mock BulletPoint."""
         bullet = Mock()
         bullet.id = bullet_id
-        bullet.bullet_text = text
+        bullet.full_text = text
         return bullet
 
     def create_mock_job(self, is_current: bool = False):
@@ -456,7 +456,7 @@ class TestResumeGeneratorIntegration:
         for i in range(5):
             bullet = Mock()
             bullet.id = i
-            bullet.bullet_text = f"Developed Python application {i} that improved performance by {10 + i*10}%"
+            bullet.full_text = f"Developed Python application {i} that improved performance by {10 + i*10}%"
 
             job = Mock()
             job.company_name = "CurrentCorp"
@@ -470,7 +470,7 @@ class TestResumeGeneratorIntegration:
         for i in range(5, 10):
             bullet = Mock()
             bullet.id = i
-            bullet.bullet_text = f"Managed SQL database with {i}M records"
+            bullet.full_text = f"Managed SQL database with {i}M records"
 
             job = Mock()
             job.company_name = "OldCorp"

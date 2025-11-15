@@ -232,10 +232,10 @@ class MatchingEngine:
             ScoredAccomplishment with detailed scoring
         """
         # Calculate component scores
-        skill_score, matched_skills = self._calculate_skill_match(bullet.bullet_text, all_skills)
-        semantic_score = self._calculate_semantic_similarity(bullet.bullet_text, job_vector)
+        skill_score, matched_skills = self._calculate_skill_match(bullet.full_text, all_skills)
+        semantic_score = self._calculate_semantic_similarity(bullet.full_text, job_vector)
         recency_score = self._calculate_recency_score(job.start_date, job.is_current)
-        metrics_score = self._calculate_metrics_score(bullet.bullet_text)
+        metrics_score = self._calculate_metrics_score(bullet.full_text)
 
         # Calculate final weighted score
         final_score = (
@@ -253,7 +253,7 @@ class MatchingEngine:
 
         return ScoredAccomplishment(
             bullet_id=bullet.id,
-            bullet_text=bullet.bullet_text,
+            bullet_text=bullet.full_text,
             job_title=job.job_title,
             company_name=job.company_name,
             final_score=final_score,

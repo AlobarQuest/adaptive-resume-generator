@@ -1,0 +1,35 @@
+On the dashboard, when you first open it, you need to be able to see clearly what profile it has loaded. Needs to be the same one that the dashboard stats is showing numbers for.
+
+If there is no profile, the "Upload Job Posting" link needs to say "Create Applicant Profile", since the uploaded job posting would not have a profile to compare it against.
+
+In the "Profile Management" screen, there needs to be a way to import in an existing resume so that the data in the resume could be used to fill out the profile details, as best it can.
+
+On the Profile Management screen, the "Edit Profile" button needs to be moved into the bottom box where it says "Current Profile". The "Your Profiles" box should be shorter, since there will normally not be more than 3ish profiles. Often only one, per application user. Sometimes there may be more than one, but not all the time.
+
+When inputing work experience in the Job dialog, the start dates and aned dates needs to be an easy to use date picker, and the date format needs to be in the US format of mm-dd-yyyy.
+
+In the dialog box where it says "Description", it should say "Role Description" instead.
+
+When you click "add accomplishment", the box needs to have the ability to enhance the accomplish right there, before you click "ok" to save it. The existing enhancement options need to stay as well, as they may need to be enhanced after initially created as well.
+
+If I try and add a job role, and dont put in a start date, the program dies with an error of "Traceback (most recent call last):
+  File "C:\Users\devon\Projects\adaptive-resume-generator\src\adaptive_resume\gui\main_window.py", line 410, in _add_job
+    data = dialog.get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\devon\Projects\adaptive-resume-generator\src\adaptive_resume\gui\dialogs\job_dialog.py", line 178, in get_result
+    raise ValueError("Start date is required")
+ValueError: Start date is required"
+
+Need to add a way to delete Roles at a company. I think a small "Delete" button next to the role would be better than one big delete button and relying on the user to know the role has to be highlighted.
+
+There needs to be a way to "undelete" roles and accomplishments. Not forever, but for a reasonable amount of entries.
+
+The "Enhance Bullet" button on the Companies and Roles page is not very readable. The text appears to be truncated.
+
+The manage education screen has no way to add, edit, or delete education
+
+the Manage skills page has no way to add,edit, or delete skills. This page needs to be easy to use and should have a databank of skills to select from, as well as the ability to enter in custom ones.
+
+On the Upload Job Posting Screen, when I pasted a job posting via the paste text option, and then clicked "analyze Generate Tailored Resume" I got an error box that popped up and said "Failed to process job posting. 'BulletPoint' object has no attribute 'bullet_text'
+
+The menu item "Review Print" should be named "Review and Print". When I click it there is still a "coming on phase 5" section at the bottom.

@@ -29,6 +29,7 @@ class ProfileManagementScreen(BaseScreen):
     select_profile_requested = pyqtSignal(int)  # profile_id
     add_profile_requested = pyqtSignal()
     edit_profile_requested = pyqtSignal()
+    import_resume_requested = pyqtSignal()
 
     def __init__(
         self,
@@ -54,15 +55,16 @@ class ProfileManagementScreen(BaseScreen):
 
         header_layout.addStretch()
 
+        # Import resume button
+        import_resume_btn = QPushButton("📄 Import Resume")
+        import_resume_btn.setToolTip("Import an existing resume to auto-populate profile data")
+        import_resume_btn.clicked.connect(self.import_resume_requested.emit)
+        header_layout.addWidget(import_resume_btn)
+
         # Add profile button
         add_profile_btn = QPushButton("➕ Add Profile")
         add_profile_btn.clicked.connect(self.add_profile_requested.emit)
         header_layout.addWidget(add_profile_btn)
-
-        # Edit profile button
-        edit_profile_btn = QPushButton("✏️ Edit Profile")
-        edit_profile_btn.clicked.connect(self.edit_profile_requested.emit)
-        header_layout.addWidget(edit_profile_btn)
 
         layout.addLayout(header_layout)
 
@@ -78,6 +80,8 @@ class ProfileManagementScreen(BaseScreen):
         self.profile_list = QListWidget()
         self.profile_list.itemDoubleClicked.connect(self._on_profile_double_clicked)
         self.profile_list.currentItemChanged.connect(self._on_profile_selected)
+        # Limit height for typical usage (1-3 profiles)
+        self.profile_list.setMaximumHeight(200)
         list_layout.addWidget(self.profile_list)
 
         select_btn = QPushButton("Select Profile")
@@ -99,6 +103,11 @@ class ProfileManagementScreen(BaseScreen):
         self.current_profile_label = QLabel("No profile selected")
         self.current_profile_label.setWordWrap(True)
         info_layout.addWidget(self.current_profile_label)
+
+        # Edit profile button in Current Profile section
+        edit_profile_btn = QPushButton("✏️ Edit Profile")
+        edit_profile_btn.clicked.connect(self.edit_profile_requested.emit)
+        info_layout.addWidget(edit_profile_btn)
 
         layout.addWidget(info_frame)
 

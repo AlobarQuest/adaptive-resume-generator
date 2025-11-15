@@ -35,11 +35,13 @@ def test_profile_dialog_returns_data(qapp):
 
 
 def test_job_dialog_returns_data(qapp):
+    from PyQt6.QtCore import QDate
+
     dialog = JobDialog()
     dialog.company_name.setText("TechCorp")
     dialog.job_title.setText("Manager")
     dialog.location.setText("Remote")
-    dialog.start_date.setText("2020-01-01")
+    dialog.start_date.setDate(QDate(2020, 1, 1))
     dialog.description.setPlainText("Led a distributed engineering team.")
     dialog.bullets.addItem("Increased retention by 20% through mentorship programs")
 

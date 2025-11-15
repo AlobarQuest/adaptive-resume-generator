@@ -28,6 +28,7 @@ class DashboardScreen(BaseScreen):
     navigate_to_upload = pyqtSignal()
     navigate_to_companies = pyqtSignal()
     navigate_to_general = pyqtSignal()
+    navigate_to_profile_creation = pyqtSignal()
 
     def __init__(
         self,
@@ -61,11 +62,21 @@ class DashboardScreen(BaseScreen):
         hero_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         hero_layout.addWidget(hero_label)
 
-        upload_btn = QPushButton("📄 Upload Job Posting")
-        upload_btn.setObjectName("primaryButton")
-        upload_btn.setMinimumHeight(50)
-        upload_btn.clicked.connect(self.navigate_to_upload.emit)
-        hero_layout.addWidget(upload_btn, 0, Qt.AlignmentFlag.AlignCenter)
+        # Current profile display
+        self.current_profile_label = QLabel("No profile selected")
+        self.current_profile_label.setObjectName("currentProfileLabel")
+        self.current_profile_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.current_profile_label.setStyleSheet(
+            "font-size: 16px; font-weight: bold; color: #4a90e2; "
+            "padding: 10px; margin: 10px 0;"
+        )
+        hero_layout.addWidget(self.current_profile_label)
+
+        self.upload_btn = QPushButton("📄 Upload Job Posting")
+        self.upload_btn.setObjectName("primaryButton")
+        self.upload_btn.setMinimumHeight(50)
+        self.upload_btn.clicked.connect(self._handle_primary_action)
+        hero_layout.addWidget(self.upload_btn, 0, Qt.AlignmentFlag.AlignCenter)
 
         layout.addWidget(hero_frame)
 
@@ -180,9 +191,26 @@ class DashboardScreen(BaseScreen):
     def set_profile(self, profile_id: int) -> None:
         """Set the current profile and update stats."""
         self.current_profile_id = profile_id
+        self._update_button_state()
         self._update_stats()
         self._update_profile_info()
         self._update_recent_jobs()
+
+    def _handle_primary_action(self) -> None:
+        """Handle the primary action button click."""
+        if self.current_profile_id:
+            # Profile exists, navigate to upload
+            self.navigate_to_upload.emit()
+        else:
+            # No profile, navigate to profile creation
+            self.navigate_to_profile_creation.emit()
+
+    def _update_button_state(self) -> None:
+        """Update the primary button text based on profile existence."""
+        if self.current_profile_id:
+            self.upload_btn.setText("📄 Upload Job Posting")
+        else:
+            self.upload_btn.setText("➕ Create Applicant Profile")
 
     def _update_stats(self) -> None:
         """Update the statistics display."""
@@ -219,10 +247,16 @@ class DashboardScreen(BaseScreen):
     def _update_profile_info(self) -> None:
         """Update the profile info panel."""
         if not self.current_profile_id or not self.profile_service:
+            self.current_profile_label.setText("No profile selected")
             return
 
         profile = self.profile_service.get_profile_by_id(self.current_profile_id)
         if profile:
+            # Update hero section current profile label
+            profile_name = f"{profile.first_name} {profile.last_name}"
+            self.current_profile_label.setText(f"Current Profile: {profile_name}")
+
+            # Update profile info panel
             info_text = f"<b>{profile.first_name} {profile.last_name}</b><br>"
             info_text += f"{profile.email}<br>"
             if profile.phone:

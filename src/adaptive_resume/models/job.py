@@ -46,7 +46,8 @@ class Job(Base):
     # Timestamps
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
-    
+    deleted_at = Column(DateTime, nullable=True)  # Soft delete timestamp
+
     # Relationships
     profile = relationship('Profile', back_populates='jobs')
     bullet_points = relationship('BulletPoint', back_populates='job', cascade='all, delete-orphan')
@@ -107,5 +108,6 @@ class Job(Base):
             'display_order': self.display_order,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'deleted_at': self.deleted_at.isoformat() if self.deleted_at else None,
             'bullet_points_count': len(self.bullet_points) if self.bullet_points else 0,
         }

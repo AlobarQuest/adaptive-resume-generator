@@ -43,6 +43,10 @@ from .dialogs import (
     CompanyDialog,
     CompanyData,
     ResumePDFPreviewDialog,
+    ResumeImportDialog,
+    EducationDialog,
+    SkillDialog,
+    RecentlyDeletedDialog,
 )
 from .widgets import NavigationMenu
 from .screens import (
@@ -113,6 +117,7 @@ class MainWindow(QMainWindow):
         self.dashboard_screen.navigate_to_upload.connect(lambda: self._navigate_to("upload"))
         self.dashboard_screen.navigate_to_companies.connect(lambda: self._navigate_to("companies"))
         self.dashboard_screen.navigate_to_general.connect(lambda: self._navigate_to("general"))
+        self.dashboard_screen.navigate_to_profile_creation.connect(self._add_profile)
 
         self.profile_screen = ProfileManagementScreen(
             profile_service=self.profile_service,
@@ -120,6 +125,7 @@ class MainWindow(QMainWindow):
         self.profile_screen.select_profile_requested.connect(self._set_current_profile)
         self.profile_screen.add_profile_requested.connect(self._add_profile)
         self.profile_screen.edit_profile_requested.connect(self._edit_profile)
+        self.profile_screen.import_resume_requested.connect(self._import_resume)
 
         self.companies_screen = CompaniesRolesScreen(
             job_service=self.job_service,
@@ -133,10 +139,16 @@ class MainWindow(QMainWindow):
         self.education_screen = EducationScreen(
             education_service=self.education_service,
         )
+        self.education_screen.add_education_requested.connect(self._add_education)
+        self.education_screen.edit_education_requested.connect(self._edit_education)
+        self.education_screen.delete_education_requested.connect(self._delete_education)
 
         self.skills_screen = SkillsScreen(
             skill_service=self.skill_service,
         )
+        self.skills_screen.add_skill_requested.connect(self._add_skill)
+        self.skills_screen.edit_skill_requested.connect(self._edit_skill)
+        self.skills_screen.delete_skill_requested.connect(self._delete_skill)
 
         self.upload_screen = JobPostingScreen(
             profile_service=self.profile_service,
@@ -177,6 +189,8 @@ class MainWindow(QMainWindow):
         jobs_view.bullet_enhance_requested.connect(self._on_enhance_bullet)
         self.companies_screen.add_job_requested.connect(self._add_job)
         self.companies_screen.edit_job_requested.connect(self._edit_job)
+        self.companies_screen.delete_job_requested.connect(self._delete_job)
+        self.companies_screen.view_recently_deleted_requested.connect(self._view_recently_deleted)
 
         # Connect signals for company management
         self.companies_screen.edit_company_requested.connect(self._edit_company)
@@ -399,6 +413,25 @@ class MainWindow(QMainWindow):
             self._refresh_current_screen()
             self.statusBar().showMessage("Profile updated successfully", 3000)
 
+    def _import_resume(self) -> None:
+        """Import resume to create or update a profile."""
+        from adaptive_resume.gui.database_manager import DatabaseManager
+
+        # Get session for the dialog
+        session = DatabaseManager.get_session()
+
+        # Open the import dialog
+        dialog = ResumeImportDialog(session, self)
+        if dialog.exec() == int(QDialog.DialogCode.Accepted):
+            # The dialog handles the import internally
+            # After successful import, refresh the profile list and set the new profile
+            imported_profile_id = dialog.imported_profile_id
+            if imported_profile_id:
+                self._set_current_profile(imported_profile_id)
+                self.statusBar().showMessage("Resume imported successfully!", 3000)
+                # Navigate to profile screen to show the results
+                self._navigate_to("profile")
+
     def _add_job(self) -> None:
         """Add a new job."""
         if self.current_profile_id is None:
@@ -479,6 +512,55 @@ class MainWindow(QMainWindow):
             self.companies_screen.on_screen_shown()
             self._on_job_selected(job_id)
             self.statusBar().showMessage("Job updated successfully", 3000)
+
+    def _delete_job(self) -> None:
+        """Delete the selected job/role."""
+        profile_id = self.current_profile_id
+        if profile_id is None:
+            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
+            return
+
+        # Get current job from companies screen
+        jobs_view = self.companies_screen.get_jobs_view()
+        job_id = jobs_view.current_job_id()
+        if job_id is None:
+            QMessageBox.information(self, "No Role Selected", "Please select a role to delete.")
+            return
+
+        # Get job details for confirmation
+        job = self.job_service.get_job_by_id(job_id)
+
+        # Confirm deletion
+        confirm = QMessageBox.question(
+            self,
+            "Confirm Deletion",
+            f"Are you sure you want to delete the role '{job.job_title}' at '{job.company_name}'?\n\n"
+            f"This will also delete all associated accomplishments.\n\n"
+            f"You can restore deleted items within 30 days using the 'Recently Deleted' button.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+
+        if confirm == QMessageBox.StandardButton.Yes:
+            try:
+                self.job_service.delete_job(job_id)
+                self.companies_screen.on_screen_shown()
+                self.statusBar().showMessage("Role deleted successfully", 3000)
+            except Exception as exc:  # pragma: no cover
+                QMessageBox.critical(self, "Error", f"Failed to delete role: {str(exc)}")
+
+    def _view_recently_deleted(self) -> None:
+        """Open the recently deleted items dialog."""
+        profile_id = self.current_profile_id
+        if profile_id is None:
+            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
+            return
+
+        dialog = RecentlyDeletedDialog(self.job_service, profile_id, self)
+        dialog.exec()
+
+        # Refresh the companies screen in case items were restored
+        self.companies_screen.on_screen_shown()
 
     def _edit_company(self) -> None:
         """Edit a company's information."""
@@ -568,6 +650,196 @@ class MainWindow(QMainWindow):
                 self.statusBar().showMessage(f"Company '{company_name}' and all roles deleted", 3000)
             except Exception as exc:
                 QMessageBox.critical(self, "Error", f"Failed to delete company: {str(exc)}")
+
+    def _add_education(self) -> None:
+        """Add a new education entry."""
+        if self.current_profile_id is None:
+            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
+            return
+
+        dialog = EducationDialog(self)
+        if dialog.exec() == int(QDialog.DialogCode.Accepted):
+            data = dialog.get_result()
+            try:
+                self.education_service.create_education(
+                    profile_id=self.current_profile_id,
+                    institution=data.institution,
+                    degree=data.degree,
+                    field_of_study=data.field_of_study,
+                    start_date=data.start_date,
+                    end_date=data.end_date,
+                    gpa=data.gpa,
+                    honors=data.honors,
+                    relevant_coursework=data.relevant_coursework,
+                    display_order=0,
+                )
+                self.education_screen.on_screen_shown()
+                self.statusBar().showMessage("Education added successfully", 3000)
+            except Exception as exc:  # pragma: no cover
+                QMessageBox.critical(self, "Error", str(exc))
+
+    def _edit_education(self) -> None:
+        """Edit the selected education entry."""
+        if self.current_profile_id is None:
+            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
+            return
+
+        education_id = self.education_screen.get_selected_education_id()
+        if education_id is None:
+            QMessageBox.information(self, "No Education Selected", "Please select an education entry to edit.")
+            return
+
+        education = self.education_service.get_education_by_id(education_id)
+        dialog = EducationDialog(
+            self,
+            education={
+                "institution": education.institution,
+                "degree": education.degree,
+                "field_of_study": education.field_of_study or "",
+                "start_date": education.start_date,
+                "end_date": education.end_date,
+                "gpa": education.gpa,
+                "honors": education.honors or "",
+                "relevant_coursework": education.relevant_coursework or "",
+            },
+        )
+        if dialog.exec() == int(QDialog.DialogCode.Accepted):
+            data = dialog.get_result()
+            try:
+                self.education_service.update_education(
+                    education_id=education_id,
+                    institution=data.institution,
+                    degree=data.degree,
+                    field_of_study=data.field_of_study,
+                    start_date=data.start_date,
+                    end_date=data.end_date,
+                    gpa=data.gpa,
+                    honors=data.honors,
+                    relevant_coursework=data.relevant_coursework,
+                )
+                self.education_screen.on_screen_shown()
+                self.statusBar().showMessage("Education updated successfully", 3000)
+            except Exception as exc:  # pragma: no cover
+                QMessageBox.critical(self, "Error", str(exc))
+
+    def _delete_education(self) -> None:
+        """Delete the selected education entry."""
+        if self.current_profile_id is None:
+            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
+            return
+
+        education_id = self.education_screen.get_selected_education_id()
+        if education_id is None:
+            QMessageBox.information(self, "No Education Selected", "Please select an education entry to delete.")
+            return
+
+        education = self.education_service.get_education_by_id(education_id)
+
+        # Confirm deletion
+        confirm = QMessageBox.question(
+            self,
+            "Confirm Deletion",
+            f"Are you sure you want to delete '{education.degree}' from '{education.institution}'?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+
+        if confirm == QMessageBox.StandardButton.Yes:
+            try:
+                self.education_service.delete_education(education_id)
+                self.education_screen.on_screen_shown()
+                self.statusBar().showMessage("Education deleted successfully", 3000)
+            except Exception as exc:  # pragma: no cover
+                QMessageBox.critical(self, "Error", f"Failed to delete education: {str(exc)}")
+
+    def _add_skill(self) -> None:
+        """Add a new skill."""
+        if self.current_profile_id is None:
+            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
+            return
+
+        dialog = SkillDialog(self)
+        if dialog.exec() == int(QDialog.DialogCode.Accepted):
+            data = dialog.get_result()
+            try:
+                self.skill_service.create_skill(
+                    profile_id=self.current_profile_id,
+                    skill_name=data.skill_name,
+                    category=data.category,
+                    proficiency_level=data.proficiency_level,
+                    years_experience=data.years_experience,
+                    display_order=0,
+                )
+                self.skills_screen.on_screen_shown()
+                self.statusBar().showMessage("Skill added successfully", 3000)
+            except Exception as exc:  # pragma: no cover
+                QMessageBox.critical(self, "Error", str(exc))
+
+    def _edit_skill(self) -> None:
+        """Edit the selected skill."""
+        if self.current_profile_id is None:
+            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
+            return
+
+        skill_id = self.skills_screen.get_selected_skill_id()
+        if skill_id is None:
+            QMessageBox.information(self, "No Skill Selected", "Please select a skill to edit.")
+            return
+
+        skill = self.skill_service.get_skill_by_id(skill_id)
+        dialog = SkillDialog(
+            self,
+            skill={
+                "skill_name": skill.skill_name,
+                "category": skill.category or "",
+                "proficiency_level": skill.proficiency_level or "",
+                "years_experience": skill.years_experience,
+            },
+        )
+        if dialog.exec() == int(QDialog.DialogCode.Accepted):
+            data = dialog.get_result()
+            try:
+                self.skill_service.update_skill(
+                    skill_id=skill_id,
+                    skill_name=data.skill_name,
+                    category=data.category,
+                    proficiency_level=data.proficiency_level,
+                    years_experience=data.years_experience,
+                )
+                self.skills_screen.on_screen_shown()
+                self.statusBar().showMessage("Skill updated successfully", 3000)
+            except Exception as exc:  # pragma: no cover
+                QMessageBox.critical(self, "Error", str(exc))
+
+    def _delete_skill(self) -> None:
+        """Delete the selected skill."""
+        if self.current_profile_id is None:
+            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
+            return
+
+        skill_id = self.skills_screen.get_selected_skill_id()
+        if skill_id is None:
+            QMessageBox.information(self, "No Skill Selected", "Please select a skill to delete.")
+            return
+
+        skill = self.skill_service.get_skill_by_id(skill_id)
+
+        # Confirm deletion
+        confirm = QMessageBox.question(
+            self,
+            "Confirm Deletion",
+            f"Are you sure you want to delete the skill '{skill.skill_name}'?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+
+        if confirm == QMessageBox.StandardButton.Yes:
+            try:
+                self.skill_service.delete_skill(skill_id)
+                self.skills_screen.on_screen_shown()
+                self.statusBar().showMessage("Skill deleted successfully", 3000)
+            except Exception as exc:  # pragma: no cover
+                QMessageBox.critical(self, "Error", f"Failed to delete skill: {str(exc)}")
 
     def _sync_bullets(self, job_id: int, bullets: list[str]) -> None:
         """Sync bullet points for a job."""

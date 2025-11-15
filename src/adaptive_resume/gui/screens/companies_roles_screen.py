@@ -35,6 +35,8 @@ class CompaniesRolesScreen(BaseScreen):
     # Signals for job management
     add_job_requested = pyqtSignal()
     edit_job_requested = pyqtSignal()
+    delete_job_requested = pyqtSignal()
+    view_recently_deleted_requested = pyqtSignal()
 
     def __init__(
         self,
@@ -123,14 +125,25 @@ class CompaniesRolesScreen(BaseScreen):
 
         roles_header_layout.addStretch()
 
-        # Add/Edit job buttons
-        add_job_btn = QPushButton("➕ Add Work Experience")
+        # Add/Edit/Delete job buttons
+        add_job_btn = QPushButton("➕ Add Role")
         add_job_btn.clicked.connect(self.add_job_requested.emit)
         roles_header_layout.addWidget(add_job_btn)
 
-        edit_job_btn = QPushButton("✏️ Edit Work Experience")
+        edit_job_btn = QPushButton("✏️ Edit Role")
         edit_job_btn.clicked.connect(self.edit_job_requested.emit)
         roles_header_layout.addWidget(edit_job_btn)
+
+        delete_job_btn = QPushButton("🗑️ Delete Role")
+        delete_job_btn.clicked.connect(self.delete_job_requested.emit)
+        delete_job_btn.setToolTip("Delete the selected role")
+        roles_header_layout.addWidget(delete_job_btn)
+
+        # View recently deleted button
+        view_deleted_btn = QPushButton("♻️ Recently Deleted")
+        view_deleted_btn.clicked.connect(self.view_recently_deleted_requested.emit)
+        view_deleted_btn.setToolTip("View and restore recently deleted roles and accomplishments")
+        roles_header_layout.addWidget(view_deleted_btn)
 
         layout.addLayout(roles_header_layout)
 

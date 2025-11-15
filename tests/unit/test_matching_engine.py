@@ -289,7 +289,7 @@ class TestMatchingEngineScoring:
         """Create a mock BulletPoint."""
         bullet = Mock()
         bullet.id = bullet_id
-        bullet.bullet_text = text
+        bullet.full_text = text
         return bullet
 
     def create_mock_job(
@@ -513,15 +513,15 @@ class TestMatchingEngineIntegration:
         """Create realistic test data."""
         bullet1 = Mock()
         bullet1.id = 1
-        bullet1.bullet_text = "Developed Python REST API using Django that reduced query time by 60%"
+        bullet1.full_text = "Developed Python REST API using Django that reduced query time by 60%"
 
         bullet2 = Mock()
         bullet2.id = 2
-        bullet2.bullet_text = "Managed PostgreSQL database with 1M+ records"
+        bullet2.full_text = "Managed PostgreSQL database with 1M+ records"
 
         bullet3 = Mock()
         bullet3.id = 3
-        bullet3.bullet_text = "Attended meetings and wrote documentation"
+        bullet3.full_text = "Attended meetings and wrote documentation"
 
         job_current = Mock()
         job_current.company_name = "CurrentCorp"

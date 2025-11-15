@@ -57,7 +57,7 @@ class NavigationMenu(QWidget):
             ("education", "🎓 Manage Education"),
             ("skills", "🎯 Manage Skills"),
             ("upload", "📄 Upload Job Posting"),
-            ("review", "📋 Review & Print"),
+            ("review", "📋 Review and Print"),
         ]
         
         for screen_id, label_text in nav_items:

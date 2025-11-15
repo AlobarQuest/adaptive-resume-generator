@@ -112,39 +112,19 @@ class ReviewPrintScreen(BaseScreen):
 
         layout.addLayout(button_layout)
 
-        # Coming soon message
-        coming_soon_frame = QFrame()
-        coming_soon_frame.setStyleSheet(
-            "background-color: #2a3f5f; "
-            "border: 2px solid #4a90e2; "
-            "border-radius: 8px; "
-            "padding: 20px;"
+        # Instructions
+        instructions_text = QLabel(
+            "To generate a tailored resume PDF:\n"
+            "1. Upload a job posting from the 'Upload Job Posting' screen\n"
+            "2. View the tailored resume in the results screen\n"
+            "3. Click 'Generate PDF' to select a template and export"
         )
-        coming_soon_layout = QVBoxLayout(coming_soon_frame)
-
-        coming_soon_icon = QLabel("🚧")
-        coming_soon_icon.setStyleSheet("font-size: 24px;")
-        coming_soon_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        coming_soon_layout.addWidget(coming_soon_icon)
-
-        coming_soon_title = QLabel("Coming in Phase 5")
-        coming_soon_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #4a90e2;")
-        coming_soon_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        coming_soon_layout.addWidget(coming_soon_title)
-
-        coming_soon_text = QLabel(
-            "This feature will allow you to:\n"
-            "• Select from professional resume templates\n"
-            "• Preview your tailored resume in real-time\n"
-            "• Export as PDF with proper formatting\n"
-            "• Print directly to your printer"
+        instructions_text.setWordWrap(True)
+        instructions_text.setStyleSheet(
+            "color: #ccc; font-size: 13px; padding: 20px; "
+            "background-color: #2a2a3a; border-radius: 4px; margin-top: 20px;"
         )
-        coming_soon_text.setWordWrap(True)
-        coming_soon_text.setStyleSheet("color: #ccc; font-size: 12px;")
-        coming_soon_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        coming_soon_layout.addWidget(coming_soon_text)
-
-        layout.addWidget(coming_soon_frame)
+        layout.addWidget(instructions_text)
 
         layout.addStretch()
 

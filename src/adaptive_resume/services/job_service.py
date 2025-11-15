@@ -6,7 +6,7 @@ bullet points, including validation, business rules, and tag management.
 """
 
 from typing import Optional, List, Tuple
-from datetime import date
+from datetime import date, datetime
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from adaptive_resume.models import Job, BulletPoint, Tag, BulletTag, Profile
@@ -115,39 +115,49 @@ class JobService:
         self.session.refresh(job)
         return job
     
-    def get_job_by_id(self, job_id: int) -> Job:
+    def get_job_by_id(self, job_id: int, include_deleted: bool = False) -> Job:
         """
         Get a job by ID.
-        
+
         Args:
             job_id: The job ID
-            
+            include_deleted: If True, include soft-deleted jobs
+
         Returns:
             Job: The job
-            
+
         Raises:
             JobNotFoundError: If job not found
         """
-        job = self.session.query(Job).filter_by(id=job_id).first()
-        
+        query = self.session.query(Job).filter_by(id=job_id)
+
+        if not include_deleted:
+            query = query.filter(Job.deleted_at.is_(None))
+
+        job = query.first()
+
         if not job:
             raise JobNotFoundError(f"Job with id {job_id} not found")
-        
+
         return job
     
-    def get_jobs_for_profile(self, profile_id: int) -> List[Job]:
+    def get_jobs_for_profile(self, profile_id: int, include_deleted: bool = False) -> List[Job]:
         """
         Get all jobs for a profile.
-        
+
         Args:
             profile_id: The profile ID
-            
+            include_deleted: If True, include soft-deleted jobs
+
         Returns:
             List[Job]: All jobs for the profile, ordered by start date (newest first)
         """
-        return self.session.query(Job).filter_by(
-            profile_id=profile_id
-        ).order_by(Job.start_date.desc()).all()
+        query = self.session.query(Job).filter_by(profile_id=profile_id)
+
+        if not include_deleted:
+            query = query.filter(Job.deleted_at.is_(None))
+
+        return query.order_by(Job.start_date.desc()).all()
     
     def update_job(
         self,
@@ -224,19 +234,26 @@ class JobService:
     
     def delete_job(self, job_id: int) -> None:
         """
-        Delete a job.
-        
-        This will cascade delete all bullet points.
-        
+        Soft delete a job.
+
+        This will also soft delete all associated bullet points.
+
         Args:
             job_id: The job ID to delete
-            
+
         Raises:
             JobNotFoundError: If job not found
         """
         job = self.get_job_by_id(job_id)
-        
-        self.session.delete(job)
+
+        # Soft delete the job
+        job.deleted_at = datetime.now()
+
+        # Soft delete all bullet points
+        for bullet in job.bullet_points:
+            if bullet.deleted_at is None:
+                bullet.deleted_at = datetime.now()
+
         self.session.commit()
     
     # ==================== BulletPoint CRUD Operations ====================
@@ -303,39 +320,49 @@ class JobService:
         
         return bullet
     
-    def get_bullet_point_by_id(self, bullet_id: int) -> BulletPoint:
+    def get_bullet_point_by_id(self, bullet_id: int, include_deleted: bool = False) -> BulletPoint:
         """
         Get a bullet point by ID.
-        
+
         Args:
             bullet_id: The bullet point ID
-            
+            include_deleted: If True, include soft-deleted bullet points
+
         Returns:
             BulletPoint: The bullet point
-            
+
         Raises:
             BulletPointNotFoundError: If bullet point not found
         """
-        bullet = self.session.query(BulletPoint).filter_by(id=bullet_id).first()
-        
+        query = self.session.query(BulletPoint).filter_by(id=bullet_id)
+
+        if not include_deleted:
+            query = query.filter(BulletPoint.deleted_at.is_(None))
+
+        bullet = query.first()
+
         if not bullet:
             raise BulletPointNotFoundError(f"Bullet point with id {bullet_id} not found")
-        
+
         return bullet
     
-    def get_bullet_points_for_job(self, job_id: int) -> List[BulletPoint]:
+    def get_bullet_points_for_job(self, job_id: int, include_deleted: bool = False) -> List[BulletPoint]:
         """
         Get all bullet points for a job.
-        
+
         Args:
             job_id: The job ID
-            
+            include_deleted: If True, include soft-deleted bullet points
+
         Returns:
             List[BulletPoint]: All bullet points for the job, ordered by display_order
         """
-        return self.session.query(BulletPoint).filter_by(
-            job_id=job_id
-        ).order_by(BulletPoint.display_order).all()
+        query = self.session.query(BulletPoint).filter_by(job_id=job_id)
+
+        if not include_deleted:
+            query = query.filter(BulletPoint.deleted_at.is_(None))
+
+        return query.order_by(BulletPoint.display_order).all()
     
     def update_bullet_point(
         self,
@@ -393,19 +420,209 @@ class JobService:
     
     def delete_bullet_point(self, bullet_id: int) -> None:
         """
-        Delete a bullet point.
-        
+        Soft delete a bullet point.
+
         Args:
             bullet_id: The bullet point ID to delete
-            
+
         Raises:
             BulletPointNotFoundError: If bullet point not found
         """
         bullet = self.get_bullet_point_by_id(bullet_id)
-        
+
+        # Soft delete the bullet point
+        bullet.deleted_at = datetime.now()
+
+        self.session.commit()
+
+    # ==================== Soft Delete Management ====================
+
+    def get_recently_deleted_jobs(self, profile_id: int, days: int = 30) -> List[Job]:
+        """
+        Get jobs that were soft-deleted within the specified number of days.
+
+        Args:
+            profile_id: The profile ID
+            days: Number of days to look back (default 30)
+
+        Returns:
+            List[Job]: Recently deleted jobs, ordered by deletion date (newest first)
+        """
+        from datetime import timedelta
+
+        cutoff_date = datetime.now() - timedelta(days=days)
+
+        return self.session.query(Job).filter(
+            Job.profile_id == profile_id,
+            Job.deleted_at.isnot(None),
+            Job.deleted_at >= cutoff_date
+        ).order_by(Job.deleted_at.desc()).all()
+
+    def get_recently_deleted_bullets(self, profile_id: int, days: int = 30) -> List[BulletPoint]:
+        """
+        Get bullet points that were soft-deleted within the specified number of days.
+
+        Args:
+            profile_id: The profile ID
+            days: Number of days to look back (default 30)
+
+        Returns:
+            List[BulletPoint]: Recently deleted bullets, ordered by deletion date (newest first)
+        """
+        from datetime import timedelta
+
+        cutoff_date = datetime.now() - timedelta(days=days)
+
+        return self.session.query(BulletPoint).join(Job).filter(
+            Job.profile_id == profile_id,
+            BulletPoint.deleted_at.isnot(None),
+            BulletPoint.deleted_at >= cutoff_date
+        ).order_by(BulletPoint.deleted_at.desc()).all()
+
+    def restore_job(self, job_id: int) -> Job:
+        """
+        Restore a soft-deleted job and its bullet points.
+
+        Args:
+            job_id: The job ID to restore
+
+        Returns:
+            Job: The restored job
+
+        Raises:
+            JobNotFoundError: If job not found (including non-deleted jobs)
+        """
+        job = self.get_job_by_id(job_id, include_deleted=True)
+
+        if job.deleted_at is None:
+            raise JobValidationError("Job is not deleted")
+
+        # Restore the job
+        job.deleted_at = None
+
+        # Restore all bullet points that were deleted at the same time
+        for bullet in job.bullet_points:
+            if bullet.deleted_at is not None:
+                bullet.deleted_at = None
+
+        self.session.commit()
+        self.session.refresh(job)
+        return job
+
+    def restore_bullet_point(self, bullet_id: int) -> BulletPoint:
+        """
+        Restore a soft-deleted bullet point.
+
+        Args:
+            bullet_id: The bullet point ID to restore
+
+        Returns:
+            BulletPoint: The restored bullet point
+
+        Raises:
+            BulletPointNotFoundError: If bullet point not found
+            BulletPointValidationError: If bullet point is not deleted
+        """
+        bullet = self.get_bullet_point_by_id(bullet_id, include_deleted=True)
+
+        if bullet.deleted_at is None:
+            raise BulletPointValidationError("Bullet point is not deleted")
+
+        # Restore the bullet point
+        bullet.deleted_at = None
+
+        self.session.commit()
+        self.session.refresh(bullet)
+        return bullet
+
+    def permanently_delete_job(self, job_id: int) -> None:
+        """
+        Permanently delete a job and all its bullet points.
+
+        This is irreversible. The job must already be soft-deleted.
+
+        Args:
+            job_id: The job ID to permanently delete
+
+        Raises:
+            JobNotFoundError: If job not found
+            JobValidationError: If job is not soft-deleted
+        """
+        job = self.get_job_by_id(job_id, include_deleted=True)
+
+        if job.deleted_at is None:
+            raise JobValidationError("Job must be soft-deleted before permanent deletion")
+
+        # Permanently delete
+        self.session.delete(job)
+        self.session.commit()
+
+    def permanently_delete_bullet_point(self, bullet_id: int) -> None:
+        """
+        Permanently delete a bullet point.
+
+        This is irreversible. The bullet point must already be soft-deleted.
+
+        Args:
+            bullet_id: The bullet point ID to permanently delete
+
+        Raises:
+            BulletPointNotFoundError: If bullet point not found
+            BulletPointValidationError: If bullet point is not soft-deleted
+        """
+        bullet = self.get_bullet_point_by_id(bullet_id, include_deleted=True)
+
+        if bullet.deleted_at is None:
+            raise BulletPointValidationError("Bullet point must be soft-deleted before permanent deletion")
+
+        # Permanently delete
         self.session.delete(bullet)
         self.session.commit()
-    
+
+    def purge_old_deleted_items(self, profile_id: int, days: int = 30) -> Tuple[int, int]:
+        """
+        Permanently delete all soft-deleted items older than the specified number of days.
+
+        Args:
+            profile_id: The profile ID
+            days: Number of days (items deleted more than this long ago will be purged)
+
+        Returns:
+            Tuple[int, int]: Number of jobs and bullet points permanently deleted
+        """
+        from datetime import timedelta
+
+        cutoff_date = datetime.now() - timedelta(days=days)
+
+        # Find old deleted jobs
+        old_jobs = self.session.query(Job).filter(
+            Job.profile_id == profile_id,
+            Job.deleted_at.isnot(None),
+            Job.deleted_at < cutoff_date
+        ).all()
+
+        # Find old deleted bullet points (not part of deleted jobs)
+        old_bullets = self.session.query(BulletPoint).join(Job).filter(
+            Job.profile_id == profile_id,
+            Job.deleted_at.is_(None),  # Job is not deleted
+            BulletPoint.deleted_at.isnot(None),
+            BulletPoint.deleted_at < cutoff_date
+        ).all()
+
+        jobs_count = len(old_jobs)
+        bullets_count = len(old_bullets)
+
+        # Permanently delete them
+        for job in old_jobs:
+            self.session.delete(job)
+
+        for bullet in old_bullets:
+            self.session.delete(bullet)
+
+        self.session.commit()
+
+        return jobs_count, bullets_count
+
     # ==================== Tag Management ====================
     
     def add_tags_to_bullet(self, bullet_id: int, tag_names: List[str]) -> BulletPoint:

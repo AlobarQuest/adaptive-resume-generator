@@ -20,7 +20,10 @@ try:
         QWidget,
         QVBoxLayout,
         QMessageBox,
+        QDateEdit,
+        QCheckBox,
     )
+    from PyQt6.QtCore import QDate
 except ImportError as exc:  # pragma: no cover
     raise ImportError("PyQt6 is required to use the GUI components") from exc
 
@@ -58,8 +61,23 @@ class JobDialog(QDialog):
         self.company_name = QLineEdit()
         self.job_title = QLineEdit()
         self.location = QLineEdit()
-        self.start_date = self._date_field()
-        self.end_date = self._date_field()
+
+        # Date fields with US format (MM-dd-yyyy)
+        self.start_date = QDateEdit()
+        self.start_date.setCalendarPopup(True)
+        self.start_date.setDisplayFormat("MM-dd-yyyy")
+        self.start_date.setDate(QDate.currentDate())
+
+        self.end_date = QDateEdit()
+        self.end_date.setCalendarPopup(True)
+        self.end_date.setDisplayFormat("MM-dd-yyyy")
+        self.end_date.setDate(QDate.currentDate())
+        self.end_date.setSpecialValueText("Present")  # Show "Present" when cleared
+
+        # "Currently working here" checkbox
+        self.is_current_checkbox = QCheckBox("Currently working here")
+        self.is_current_checkbox.stateChanged.connect(self._on_current_changed)
+
         self.description = QTextEdit()
         self.description.setMaximumHeight(120)
 
@@ -68,7 +86,8 @@ class JobDialog(QDialog):
         form.addRow("Location", self.location)
         form.addRow("Start Date", self.start_date)
         form.addRow("End Date", self.end_date)
-        form.addRow("Description", self.description)
+        form.addRow("", self.is_current_checkbox)
+        form.addRow("Role Description", self.description)
 
         layout.addLayout(form)
 
@@ -91,23 +110,35 @@ class JobDialog(QDialog):
         self.buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
-        self.buttons.accepted.connect(self.accept)
+        self.buttons.accepted.connect(self._validate_and_accept)
         self.buttons.rejected.connect(self.reject)
         layout.addWidget(self.buttons)
 
-    def _date_field(self) -> QWidget:
-        widget = QLineEdit()
-        widget.setPlaceholderText("YYYY-MM-DD or leave blank")
-        return widget
+    def _on_current_changed(self, state: int) -> None:
+        """Handle the 'currently working here' checkbox state change."""
+        # Disable end date if currently working
+        self.end_date.setEnabled(state == 0)
 
     def _load_job(self, job: dict) -> None:
         self.company_name.setText(job.get("company_name", ""))
         self.job_title.setText(job.get("job_title", ""))
         self.location.setText(job.get("location", ""))
+
+        # Load start date
         if job.get("start_date"):
-            self.start_date.setText(job["start_date"].strftime("%Y-%m-%d"))
+            start = job["start_date"]
+            self.start_date.setDate(QDate(start.year, start.month, start.day))
+
+        # Load end date and set checkbox
         if job.get("end_date"):
-            self.end_date.setText(job["end_date"].strftime("%Y-%m-%d"))
+            end = job["end_date"]
+            self.end_date.setDate(QDate(end.year, end.month, end.day))
+            self.is_current_checkbox.setChecked(False)
+        else:
+            # No end date means current position
+            self.is_current_checkbox.setChecked(True)
+            self.end_date.setEnabled(False)
+
         self.description.setPlainText(job.get("description", ""))
         for bullet in job.get("bullets", []):
             self.bullets.addItem(QListWidgetItem(bullet))
@@ -120,6 +151,16 @@ class JobDialog(QDialog):
         dialog.setWindowTitle("New Accomplishment")
         inner_layout = QVBoxLayout(dialog)
         inner_layout.addWidget(text)
+
+        # Add button layout with Enhance button
+        button_layout = QHBoxLayout()
+        enhance_btn = QPushButton("✨ Enhance")
+        enhance_btn.setToolTip("Enhance this accomplishment before saving")
+        enhance_btn.clicked.connect(lambda: self._enhance_inline_text(text))
+        button_layout.addWidget(enhance_btn)
+        button_layout.addStretch()
+        inner_layout.addLayout(button_layout)
+
         button_box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
@@ -137,6 +178,24 @@ class JobDialog(QDialog):
         if row >= 0:
             item = self.bullets.takeItem(row)
             del item
+
+    def _enhance_inline_text(self, text_edit: QTextEdit) -> None:
+        """Enhance text in a QTextEdit widget (for inline enhancement in dialogs)."""
+        original_text = text_edit.toPlainText().strip()
+        if not original_text:
+            QMessageBox.information(
+                self,
+                "No Text",
+                "Please enter some text before enhancing."
+            )
+            return
+
+        # Open enhancement dialog
+        dialog = BulletEnhancementDialog(original_text, self)
+        if dialog.exec() == int(QDialog.DialogCode.Accepted):
+            enhanced_text = dialog.get_enhanced_text()
+            if enhanced_text:
+                text_edit.setPlainText(enhanced_text)
 
     def _enhance_bullet(self) -> None:
         """Enhance the selected bullet using templates or AI."""
@@ -161,23 +220,54 @@ class JobDialog(QDialog):
                 # Replace the bullet with enhanced version
                 current_item.setText(enhanced_text)
 
-    def _parse_date(self, text: str) -> Optional[date]:
-        text = text.strip()
-        if not text:
-            return None
-        try:
-            year, month, day = [int(part) for part in text.split("-")]
-            return date(year, month, day)
-        except ValueError as exc:  # pragma: no cover - validated in dialog
-            raise ValueError("Dates must be in YYYY-MM-DD format") from exc
+    def _validate_and_accept(self) -> None:
+        """Validate form fields before accepting the dialog."""
+        # Validate required fields
+        if not self.company_name.text().strip():
+            QMessageBox.warning(
+                self,
+                "Missing Information",
+                "Please enter a company name."
+            )
+            self.company_name.setFocus()
+            return
+
+        if not self.job_title.text().strip():
+            QMessageBox.warning(
+                self,
+                "Missing Information",
+                "Please enter a job title."
+            )
+            self.job_title.setFocus()
+            return
+
+        # Dates are always valid with QDateEdit, just check logical consistency
+        if not self.is_current_checkbox.isChecked():
+            start_qdate = self.start_date.date()
+            end_qdate = self.end_date.date()
+            if end_qdate < start_qdate:
+                QMessageBox.warning(
+                    self,
+                    "Invalid Dates",
+                    "End date cannot be before start date."
+                )
+                self.end_date.setFocus()
+                return
+
+        # All validation passed, accept the dialog
+        self.accept()
 
     def get_result(self) -> JobDialogResult:
         """Return the captured job data."""
-        start = self._parse_date(self.start_date.text())
-        if start is None:
-            raise ValueError("Start date is required")
+        # Convert QDate to Python date
+        start_qdate = self.start_date.date()
+        start = date(start_qdate.year(), start_qdate.month(), start_qdate.day())
 
-        end = self._parse_date(self.end_date.text())
+        # End date is None if currently working
+        end = None
+        if not self.is_current_checkbox.isChecked():
+            end_qdate = self.end_date.date()
+            end = date(end_qdate.year(), end_qdate.month(), end_qdate.day())
 
         return JobDialogResult(
             company_name=self.company_name.text().strip(),
@@ -185,7 +275,7 @@ class JobDialog(QDialog):
             location=self.location.text().strip(),
             start_date=start,
             end_date=end,
-            is_current=end is None,
+            is_current=self.is_current_checkbox.isChecked(),
             description=self.description.toPlainText().strip(),
             bullets=[self.bullets.item(i).text() for i in range(self.bullets.count())],
         )
