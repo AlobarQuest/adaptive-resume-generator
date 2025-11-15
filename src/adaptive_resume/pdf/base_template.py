@@ -333,5 +333,45 @@ class BaseResumeTemplate(ABC):
 
         return current_y
 
+    def _get_font_variant(self, variant: str = 'regular') -> str:
+        """Get the correct font name for a variant.
+
+        ReportLab has specific font names for each variant. This method
+        maps the font family to the correct variant names.
+
+        Args:
+            variant: Font variant ('regular', 'bold', 'italic', 'bold-italic')
+
+        Returns:
+            Font name for the specified variant
+        """
+        # Map font families to their variant names
+        font_variants = {
+            'Times-Roman': {
+                'regular': 'Times-Roman',
+                'bold': 'Times-Bold',
+                'italic': 'Times-Italic',
+                'bold-italic': 'Times-BoldItalic'
+            },
+            'Helvetica': {
+                'regular': 'Helvetica',
+                'bold': 'Helvetica-Bold',
+                'italic': 'Helvetica-Oblique',
+                'bold-italic': 'Helvetica-BoldOblique'
+            },
+            'Courier': {
+                'regular': 'Courier',
+                'bold': 'Courier-Bold',
+                'italic': 'Courier-Oblique',
+                'bold-italic': 'Courier-BoldOblique'
+            }
+        }
+
+        # Get the variants for this font family
+        variants = font_variants.get(self.spec.font_family, {})
+
+        # Return the requested variant, or fallback to regular
+        return variants.get(variant, self.spec.font_family)
+
 
 __all__ = ['ResumeSection', 'TemplateSpec', 'BaseResumeTemplate']
