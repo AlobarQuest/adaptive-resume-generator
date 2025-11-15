@@ -99,6 +99,8 @@ The application follows a strict layered architecture:
      - `nlp_analyzer.py`: Extract requirements using spaCy + AI hybrid approach
      - `matching_engine.py`: Score accomplishments with 4-component algorithm
      - `resume_generator.py`: Generate tailored resumes with skill coverage analysis
+   - **PDF Generation** (Phase 5):
+     - `resume_pdf_generator.py`: Generate professional PDF resumes from tailored data
 
 3. **Data Layer** (`src/adaptive_resume/models/`): SQLAlchemy ORM models
    - `base.py`: Database configuration, session factory, and Base class
@@ -106,11 +108,21 @@ The application follows a strict layered architecture:
    - **Phase 4 models**: JobPosting, TailoredResumeModel (for storing analysis results)
    - All models inherit from `Base` defined in `base.py`
 
-4. **Configuration** (`src/adaptive_resume/config/`):
+4. **PDF Generation Subsystem** (`src/adaptive_resume/pdf/`):
+   - `base_template.py`: BaseResumeTemplate and TemplateSpec for template system
+   - `template_registry.py`: Template management with decorator-based registration
+   - `pdf_utils.py`: Formatting, text wrapping, and layout utilities
+   - `templates/`: Resume template implementations
+     - `classic_template.py`: Traditional professional serif layout
+     - `modern_template.py`: Contemporary two-column design with sidebar
+     - `compact_template.py`: Dense space-efficient layout
+     - `ats_friendly_template.py`: ATS-optimized simple structure
+
+5. **Configuration** (`src/adaptive_resume/config/`):
    - `settings.py`: Application settings with encrypted API key storage
    - Uses `~/.adaptive_resume/settings.json` for persistence
 
-5. **Utilities** (`src/adaptive_resume/utils/`):
+6. **Utilities** (`src/adaptive_resume/utils/`):
    - `encryption.py`: Fernet-based encryption for API keys
 
 ### Database Session Management
@@ -221,6 +233,18 @@ alembic/              # Database migrations
   - New screens: JobPostingScreen (upload/paste), TailoringResultsScreen (results display)
 - **Phase 4 Original Plan**: `docs/development/phase_4_plan.md` - Initial comprehensive plan (reference only)
 
+### Phase 5: Resume Generation & PDF Printing (✅ PHASES 5.1-5.5 COMPLETE)
+- **Phase 5 Plan**: `docs/development/phase_5_resume_pdf_plan.md` - 80% complete, production-ready
+  - 5 phases completed: Template Foundation, Classic Template, PDF Generator Service, Additional Templates, UI Integration
+  - **4 professional resume templates**: Classic, Modern (two-column), Compact (dense), ATS-Friendly (parseable)
+  - **ResumePDFGenerator service**: Transforms TailoredResume + Profile data → professional PDFs
+  - **ResumePDFPreviewDialog**: Template selection, customization, preview, export workflow
+  - **120 tests passing** (34 utils, 23 base/registry, 30 classic, 9 additional, 20 generator, 4 E2E)
+  - **Performance**: All templates generate in <0.02 seconds, file sizes 2.8-4.1KB
+  - PDF subsystem: ~4,000 lines of code across templates, services, and utilities
+  - Complete workflow: Upload job → Get tailoring results → Generate PDF → Export
+  - Phase 5.6 (Testing & Polish) remaining: Optional end-to-end validation and documentation
+
 ## Development Notes
 
 ### When Adding New Models
@@ -249,7 +273,7 @@ alembic/              # Database migrations
   - Skills & Education (general info management)
   - Job Posting Upload (✅ Phase 4 - implemented)
   - Tailoring Results (✅ Phase 4 - implemented)
-  - Review & Print (Phase 5 - future)
+  - PDF Generation (✅ Phase 5 - implemented via dialog in results screen)
 - When implementing new UI features, align with the target design to avoid rework
 
 ### When Working with Services
