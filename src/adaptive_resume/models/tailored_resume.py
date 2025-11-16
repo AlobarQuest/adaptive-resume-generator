@@ -5,7 +5,7 @@ Represents tailored resumes generated for specific job postings,
 including selected accomplishments, skill coverage, and recommendations.
 """
 
-from sqlalchemy import Column, Integer, Text, DateTime, Float, ForeignKey
+from sqlalchemy import Column, Integer, Text, DateTime, Float, ForeignKey, String, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from adaptive_resume.models.base import Base
@@ -42,6 +42,14 @@ class TailoredResumeModel(Base):
     # Overall match score
     match_score = Column(Float, nullable=True)  # 0.0-1.0
 
+    # Variant support (Phase 6.2)
+    variant_name = Column(String(100), nullable=True)  # e.g., "Conservative", "Technical", "Bold"
+    variant_number = Column(Integer, nullable=False, default=1)  # Auto-incrementing variant number per job
+    parent_variant_id = Column(Integer, ForeignKey('tailored_resumes.id', ondelete='SET NULL'), nullable=True)
+    is_primary = Column(Boolean, nullable=False, default=True)  # Is this the primary/default variant?
+    notes = Column(Text, nullable=True)  # User notes about this variant
+    performance_metrics = Column(Text, nullable=True)  # JSON: {"interview_rate": 0.5, "response_time_days": 7, ...}
+
     # Timestamps
     created_at = Column(DateTime, nullable=False, server_default=func.now(), index=True)
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
@@ -50,6 +58,9 @@ class TailoredResumeModel(Base):
     profile = relationship('Profile', back_populates='tailored_resumes')
     job_posting = relationship('JobPosting', back_populates='tailored_resumes')
     cover_letters = relationship('CoverLetter', back_populates='tailored_resume', cascade='all, delete-orphan')
+
+    # Self-referential relationship for variant parent
+    parent_variant = relationship('TailoredResumeModel', remote_side=[id], foreign_keys=[parent_variant_id])
 
     def __repr__(self):
         return f"<TailoredResumeModel(id={self.id}, profile_id={self.profile_id}, job_posting_id={self.job_posting_id})>"

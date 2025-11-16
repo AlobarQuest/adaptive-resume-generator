@@ -24,7 +24,7 @@ except ImportError as exc:
 
 from .base_screen import BaseScreen
 from adaptive_resume.services import TailoredResume, ResumeGenerator
-from adaptive_resume.gui.dialogs import CoverLetterEditorDialog
+from adaptive_resume.gui.dialogs import CoverLetterEditorDialog, ResumeVariantsDialog
 from adaptive_resume.gui.database_manager import DatabaseManager
 
 logger = logging.getLogger(__name__)
@@ -368,6 +368,13 @@ class TailoringResultsScreen(BaseScreen):
         cover_letter_btn.clicked.connect(self._on_generate_cover_letter)
         button_layout.addWidget(cover_letter_btn)
 
+        # Manage Variants button
+        variants_btn = QPushButton("📋 Manage Variants")
+        variants_btn.setMinimumHeight(50)
+        variants_btn.setStyleSheet("font-size: 14px; padding: 10px 20px;")
+        variants_btn.clicked.connect(self._on_manage_variants)
+        button_layout.addWidget(variants_btn)
+
         # Start over button
         start_over_btn = QPushButton("🔄 Analyze Another Job")
         start_over_btn.setMinimumHeight(50)
@@ -433,6 +440,44 @@ class TailoringResultsScreen(BaseScreen):
                 self,
                 "Error",
                 f"Failed to generate cover letter:\n{str(e)}"
+            )
+
+    def _on_manage_variants(self):
+        """Handle manage variants button click."""
+        try:
+            if not self.tailored_resume or not self.tailored_resume.job_posting_id:
+                from PyQt6.QtWidgets import QMessageBox
+                QMessageBox.warning(
+                    self,
+                    "No Job Posting",
+                    "Unable to find job posting information for variant management."
+                )
+                return
+
+            # Get current tailored resume ID
+            current_variant_id = None
+            if hasattr(self.tailored_resume, 'id') and self.tailored_resume.id:
+                current_variant_id = self.tailored_resume.id
+
+            # Open variants dialog
+            dialog = ResumeVariantsDialog(
+                job_posting_id=self.tailored_resume.job_posting_id,
+                current_variant_id=current_variant_id,
+                parent=self
+            )
+
+            dialog.exec()
+
+            # Could optionally reload/refresh results if a different variant was selected
+            logger.info("Variants dialog closed")
+
+        except Exception as e:
+            logger.error(f"Error managing variants: {e}", exc_info=True)
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to open variants manager:\n{str(e)}"
             )
 
 

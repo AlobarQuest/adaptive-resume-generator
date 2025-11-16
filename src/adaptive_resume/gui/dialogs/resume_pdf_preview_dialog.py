@@ -26,7 +26,8 @@ try:
 except ImportError as exc:  # pragma: no cover
     raise ImportError("PyQt6 is required to use the GUI components") from exc
 
-from adaptive_resume.services import ResumePDFGenerator, ResumePDFGeneratorError
+from adaptive_resume.services import ResumePDFGenerator, ResumePDFGeneratorError, ResumeVariantService
+from adaptive_resume.models.tailored_resume import TailoredResumeModel
 from adaptive_resume.gui.database_manager import DatabaseManager
 
 
@@ -56,8 +57,19 @@ class ResumePDFPreviewDialog(QDialog):
         self.tailored_resume_id = tailored_resume_id
         self.session = DatabaseManager.get_session()
         self.pdf_generator = ResumePDFGenerator(self.session)
+        self.variant_service = ResumeVariantService(self.session)
         self.current_pdf_bytes = None
         self.temp_pdf_path = None
+
+        # Load resume to get job_posting_id for variant lookup
+        self.current_resume = self.session.query(TailoredResumeModel).filter_by(
+            id=tailored_resume_id
+        ).first()
+        self.available_variants = []
+        if self.current_resume:
+            self.available_variants = self.variant_service.list_variants(
+                self.current_resume.job_posting_id
+            )
 
         self.setWindowTitle("Resume PDF Preview")
         self.setMinimumWidth(700)
@@ -80,6 +92,11 @@ class ResumePDFPreviewDialog(QDialog):
         subtitle.setWordWrap(True)
         subtitle.setStyleSheet("color: #666; margin-bottom: 15px;")
         layout.addWidget(subtitle)
+
+        # Variant Selection Section (if multiple variants exist)
+        if len(self.available_variants) > 1:
+            variant_group = self._build_variant_section()
+            layout.addWidget(variant_group)
 
         # Template Selection Section
         template_group = self._build_template_section()
@@ -116,6 +133,51 @@ class ResumePDFPreviewDialog(QDialog):
         button_layout.addWidget(close_button)
 
         layout.addLayout(button_layout)
+
+    def _build_variant_section(self) -> QGroupBox:
+        """Build the variant selection section."""
+        group = QGroupBox("Variant Selection")
+        layout = QVBoxLayout()
+
+        # Info label
+        info_label = QLabel(
+            "Multiple resume variants exist for this job. Select which one to export:"
+        )
+        info_label.setWordWrap(True)
+        info_label.setStyleSheet("color: #888; margin-bottom: 10px;")
+        layout.addWidget(info_label)
+
+        # Variant selector
+        selector_layout = QHBoxLayout()
+        variant_label = QLabel("Variant:")
+        variant_label.setStyleSheet("font-weight: bold;")
+        selector_layout.addWidget(variant_label)
+
+        self.variant_combo = QComboBox()
+        self.variant_combo.setMinimumWidth(300)
+
+        # Populate variants
+        for variant in self.available_variants:
+            variant_name = variant.variant_name or f"Variant {variant.variant_number}"
+            primary_marker = " [PRIMARY]" if variant.is_primary else ""
+            match_info = f" - Match: {variant.formatted_match_score}"
+
+            display_text = f"{variant_name}{primary_marker}{match_info}"
+            self.variant_combo.addItem(display_text, variant.id)
+
+        # Set current variant as selected
+        current_index = self.variant_combo.findData(self.tailored_resume_id)
+        if current_index >= 0:
+            self.variant_combo.setCurrentIndex(current_index)
+
+        self.variant_combo.currentIndexChanged.connect(self._on_variant_changed)
+        selector_layout.addWidget(self.variant_combo)
+        selector_layout.addStretch()
+
+        layout.addLayout(selector_layout)
+
+        group.setLayout(layout)
+        return group
 
     def _build_template_section(self) -> QGroupBox:
         """Build the template selection section."""
@@ -255,6 +317,13 @@ class ResumePDFPreviewDialog(QDialog):
         self._update_template_description()
         self._regenerate_preview()
 
+    def _on_variant_changed(self):
+        """Handle variant selection change."""
+        # Update tailored_resume_id to the selected variant
+        if hasattr(self, 'variant_combo'):
+            self.tailored_resume_id = self.variant_combo.currentData()
+        self._regenerate_preview()
+
     def _on_options_changed(self):
         """Handle options change."""
         self._regenerate_preview()
@@ -266,22 +335,39 @@ class ResumePDFPreviewDialog(QDialog):
     def _regenerate_preview(self):
         """Regenerate the PDF preview."""
         try:
+            # Get selected variant ID (if variant selector exists)
+            variant_id = self.tailored_resume_id
+            if hasattr(self, 'variant_combo') and len(self.available_variants) > 1:
+                variant_id = self.variant_combo.currentData()
+
             template_name = self.template_combo.currentData()
             include_summary = self.include_summary_cb.isChecked()
             summary_text = self.summary_text_edit.toPlainText().strip() if include_summary else None
 
             # Generate PDF bytes
             self.current_pdf_bytes = self.pdf_generator.generate_pdf(
-                tailored_resume_id=self.tailored_resume_id,
+                tailored_resume_id=variant_id,
                 template_name=template_name,
                 include_summary=include_summary,
                 summary_text=summary_text if summary_text else None
             )
 
+            # Get variant info for display
+            variant_info = ""
+            if len(self.available_variants) > 1:
+                current_variant = next(
+                    (v for v in self.available_variants if v.id == variant_id),
+                    None
+                )
+                if current_variant:
+                    variant_name = current_variant.variant_name or f"Variant {current_variant.variant_number}"
+                    variant_info = f"Variant: {variant_name}\n"
+
             # Update preview info
             pdf_size_kb = len(self.current_pdf_bytes) / 1024
             self.preview_info_label.setText(
                 f"✓ PDF generated successfully\n\n"
+                f"{variant_info}"
                 f"Template: {template_name.upper()}\n"
                 f"File size: {pdf_size_kb:.1f} KB\n"
                 f"Summary: {'Included' if include_summary else 'Not included'}"

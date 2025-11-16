@@ -12,6 +12,7 @@ from .education_dialog import EducationDialog
 from .skill_dialog import SkillDialog
 from .recently_deleted_dialog import RecentlyDeletedDialog
 from .cover_letter_editor_dialog import CoverLetterEditorDialog
+from .resume_variants_dialog import ResumeVariantsDialog
 
 __all__ = [
     "ProfileDialog",
@@ -27,4 +28,5 @@ __all__ = [
     "SkillDialog",
     "RecentlyDeletedDialog",
     "CoverLetterEditorDialog",
+    "ResumeVariantsDialog",
 ]

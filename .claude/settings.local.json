@@ -7,7 +7,16 @@
       "Bash(git push:*)",
       "Bash(pip install:*)",
       "Bash(python -m spacy download:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(pytest:*)",
+      "Bash(alembic revision:*)",
+      "Bash(alembic upgrade:*)",
+      "Bash(git restore:*)",
+      "Bash(del test_soft_delete.py)",
+      "Bash(alembic current:*)",
+      "Bash(git fetch:*)",
+      "Bash(git branch:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []
