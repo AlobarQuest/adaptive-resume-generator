@@ -13,6 +13,8 @@ from .skill_dialog import SkillDialog
 from .recently_deleted_dialog import RecentlyDeletedDialog
 from .cover_letter_editor_dialog import CoverLetterEditorDialog
 from .resume_variants_dialog import ResumeVariantsDialog
+from .job_import_dialog import JobImportDialog
+from .job_preview_dialog import JobPreviewDialog
 
 __all__ = [
     "ProfileDialog",
@@ -29,4 +31,6 @@ __all__ = [
     "RecentlyDeletedDialog",
     "CoverLetterEditorDialog",
     "ResumeVariantsDialog",
+    "JobImportDialog",
+    "JobPreviewDialog",
 ]

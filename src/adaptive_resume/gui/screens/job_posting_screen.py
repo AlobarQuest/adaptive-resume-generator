@@ -34,7 +34,9 @@ from adaptive_resume.services import (
     MatchingEngine,
     ResumeGenerator,
     JobRequirements,
+    ImportedJob,
 )
+from adaptive_resume.gui.dialogs import JobImportDialog
 
 logger = logging.getLogger(__name__)
 
@@ -260,6 +262,12 @@ class JobPostingScreen(BaseScreen):
         self.paste_btn.clicked.connect(self._on_paste_clicked)
         button_layout.addWidget(self.paste_btn)
 
+        self.import_btn = QPushButton("🔗 Import from URL")
+        self.import_btn.setMinimumHeight(40)
+        self.import_btn.setStyleSheet("padding: 10px 20px;")
+        self.import_btn.clicked.connect(self._on_import_clicked)
+        button_layout.addWidget(self.import_btn)
+
         upload_layout.addLayout(button_layout)
 
         supported_label = QLabel("Supported formats: .txt, .pdf, .docx, or plain text")
@@ -307,6 +315,46 @@ class JobPostingScreen(BaseScreen):
                 self.job_posting_text = text
                 self.uploaded_file_path = None
                 self._update_upload_status("Pasted Text", len(text))
+                self.process_btn.setEnabled(True)
+
+    def _on_import_clicked(self):
+        """Handle import from URL button click."""
+        dialog = JobImportDialog(self)
+        dialog.job_imported.connect(self._on_job_imported)
+        dialog.exec()
+
+    def _on_job_imported(self, imported_data):
+        """Handle successful job import."""
+        # imported_data can be ImportedJob or List[ImportedJob]
+        if isinstance(imported_data, ImportedJob):
+            # Single import
+            self.job_posting_text = imported_data.description
+            self.uploaded_file_path = None
+
+            # Store company and title for processing
+            self.company_name = imported_data.company_name or ""
+            self.job_title = imported_data.job_title or ""
+
+            self._update_upload_status(
+                f"Imported from {imported_data.source_platform.title()}",
+                len(imported_data.description)
+            )
+            self.process_btn.setEnabled(True)
+
+        elif isinstance(imported_data, list):
+            # Bulk import - process first job for now
+            # TODO: Add support for batch processing multiple jobs
+            if imported_data:
+                first_job = imported_data[0]
+                self.job_posting_text = first_job.description
+                self.uploaded_file_path = None
+                self.company_name = first_job.company_name or ""
+                self.job_title = first_job.job_title or ""
+
+                self._update_upload_status(
+                    f"Imported {len(imported_data)} jobs (showing first)",
+                    len(first_job.description)
+                )
                 self.process_btn.setEnabled(True)
 
     def _load_file(self, file_path: str):

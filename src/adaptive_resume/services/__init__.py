@@ -21,6 +21,7 @@ from .resume_generator import ResumeGenerator, TailoredResume
 from .resume_pdf_generator import ResumePDFGenerator, ResumePDFGeneratorError
 from .cover_letter_generation_service import CoverLetterGenerationService
 from .resume_variant_service import ResumeVariantService, VariantComparison
+from .job_import_service import JobImportService, ImportedJob
 
 __version__ = '0.1.0'
 
@@ -51,4 +52,6 @@ __all__ = [
     'CoverLetterGenerationService',
     'ResumeVariantService',
     'VariantComparison',
+    'JobImportService',
+    'ImportedJob',
 ]
