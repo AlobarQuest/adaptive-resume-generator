@@ -24,6 +24,8 @@ except ImportError as exc:
 
 from .base_screen import BaseScreen
 from adaptive_resume.services import TailoredResume, ResumeGenerator
+from adaptive_resume.gui.dialogs import CoverLetterEditorDialog
+from adaptive_resume.gui.database_manager import DatabaseManager
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +35,7 @@ class TailoringResultsScreen(BaseScreen):
 
     # Signals
     generate_pdf_requested = pyqtSignal()
+    generate_cover_letter_requested = pyqtSignal()
     start_over_requested = pyqtSignal()
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
@@ -357,6 +360,14 @@ class TailoringResultsScreen(BaseScreen):
         pdf_btn.clicked.connect(self.generate_pdf_requested.emit)
         button_layout.addWidget(pdf_btn)
 
+        # Generate Cover Letter button
+        cover_letter_btn = QPushButton("✉️ Generate Cover Letter")
+        cover_letter_btn.setObjectName("primaryButton")
+        cover_letter_btn.setMinimumHeight(50)
+        cover_letter_btn.setStyleSheet("font-size: 14px; font-weight: bold;")
+        cover_letter_btn.clicked.connect(self._on_generate_cover_letter)
+        button_layout.addWidget(cover_letter_btn)
+
         # Start over button
         start_over_btn = QPushButton("🔄 Analyze Another Job")
         start_over_btn.setMinimumHeight(50)
@@ -365,6 +376,64 @@ class TailoringResultsScreen(BaseScreen):
         button_layout.addWidget(start_over_btn)
 
         self.content_layout.addWidget(button_frame)
+
+    def _on_generate_cover_letter(self):
+        """Handle generate cover letter button click."""
+        try:
+            # Get the session and required data
+            session = DatabaseManager.get_session()
+
+            # Get profile - assume first profile for now
+            from adaptive_resume.models.profile import Profile
+            profile = session.query(Profile).first()
+
+            if not profile:
+                from PyQt6.QtWidgets import QMessageBox
+                QMessageBox.warning(
+                    self,
+                    "No Profile",
+                    "Please create a profile first before generating a cover letter."
+                )
+                return
+
+            # Get job posting from tailored resume
+            job_posting = None
+            tailored_resume_model = None
+
+            if self.tailored_resume and self.tailored_resume.job_posting_id:
+                from adaptive_resume.models.job_posting import JobPosting
+                from adaptive_resume.models.tailored_resume import TailoredResumeModel
+
+                job_posting = session.query(JobPosting).filter_by(
+                    id=self.tailored_resume.job_posting_id
+                ).first()
+
+                # Get the TailoredResumeModel from database if we have an ID
+                if hasattr(self.tailored_resume, 'id') and self.tailored_resume.id:
+                    tailored_resume_model = session.query(TailoredResumeModel).filter_by(
+                        id=self.tailored_resume.id
+                    ).first()
+
+            # Open cover letter editor dialog
+            dialog = CoverLetterEditorDialog(
+                profile=profile,
+                job_posting=job_posting,
+                tailored_resume=tailored_resume_model,
+                parent=self
+            )
+
+            if dialog.exec():
+                # Cover letter was saved successfully
+                logger.info("Cover letter generated and saved")
+
+        except Exception as e:
+            logger.error(f"Error generating cover letter: {e}", exc_info=True)
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to generate cover letter:\n{str(e)}"
+            )
 
 
 __all__ = ["TailoringResultsScreen"]

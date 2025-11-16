@@ -1,0 +1,217 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-01-15",
+  "templates": [
+    {
+      "id": "professional",
+      "name": "Classic Professional",
+      "description": "Traditional, formal cover letter format for corporate roles",
+      "tone": "formal",
+      "default_length": "medium",
+      "suitable_for": ["Corporate", "Finance", "Legal", "Government", "Executive"],
+      "opening_strategy": {
+        "type": "direct",
+        "description": "Direct expression of interest with brief background",
+        "example": "I am writing to express my strong interest in the {job_title} position at {company_name}. With {years} years of experience in {field}, I am confident in my ability to contribute to your team's success."
+      },
+      "body_structure": {
+        "type": "achievements",
+        "paragraphs": 2,
+        "description": "Two paragraphs highlighting relevant achievements and skills",
+        "focus": ["relevant_experience", "key_accomplishments", "skill_alignment"]
+      },
+      "closing_strategy": {
+        "type": "formal_call_to_action",
+        "description": "Professional closing with availability statement",
+        "example": "I would welcome the opportunity to discuss how my experience aligns with your needs. I am available for an interview at your earliest convenience and look forward to hearing from you."
+      }
+    },
+    {
+      "id": "enthusiastic",
+      "name": "Modern/Enthusiastic",
+      "description": "Energetic and personable approach for creative and fast-paced environments",
+      "tone": "enthusiastic",
+      "default_length": "medium",
+      "suitable_for": ["Startups", "Tech", "Marketing", "Creative", "Social Media"],
+      "opening_strategy": {
+        "type": "hook",
+        "description": "Engaging opening that shows excitement and connection",
+        "example": "When I discovered the {job_title} position at {company_name}, I knew I had to apply. Your mission to {company_mission} resonates deeply with my own passion for {relevant_passion}, and I'm excited about the possibility of contributing to your innovative team."
+      },
+      "body_structure": {
+        "type": "story_based",
+        "paragraphs": 2,
+        "description": "Narrative approach combining passion with concrete results",
+        "focus": ["passion_and_fit", "impact_stories", "cultural_alignment"]
+      },
+      "closing_strategy": {
+        "type": "enthusiastic_next_steps",
+        "description": "Warm, forward-looking close",
+        "example": "I'm genuinely excited about the opportunity to bring my skills and enthusiasm to {company_name}. I'd love to chat more about how I can contribute to your team's success. Thanks for considering my application!"
+      }
+    },
+    {
+      "id": "technical",
+      "name": "Technical/Results-Driven",
+      "description": "Data-focused letter emphasizing quantifiable achievements and technical expertise",
+      "tone": "professional",
+      "default_length": "medium",
+      "suitable_for": ["Engineering", "Data Science", "Analytics", "Product Management", "Operations"],
+      "opening_strategy": {
+        "type": "accomplishment_hook",
+        "description": "Lead with impressive, quantified achievement",
+        "example": "During my tenure at {previous_company}, I {major_achievement with numbers}. This experience has prepared me exceptionally well for the {job_title} role at {company_name}, where I can apply my expertise in {key_skills} to drive similar results."
+      },
+      "body_structure": {
+        "type": "metrics_focused",
+        "paragraphs": 2,
+        "description": "Heavy emphasis on quantifiable results and technical skills",
+        "focus": ["quantified_achievements", "technical_skills", "problem_solving", "tools_and_technologies"]
+      },
+      "closing_strategy": {
+        "type": "results_oriented",
+        "description": "Confidence in ability to deliver results",
+        "example": "I am confident that my track record of {key_strength} would translate into measurable value for {company_name}. I would appreciate the opportunity to discuss specific ways I could contribute to your team's objectives."
+      }
+    },
+    {
+      "id": "career_change",
+      "name": "Career Change",
+      "description": "Addresses career transition by focusing on transferable skills and motivation",
+      "tone": "conversational",
+      "default_length": "medium",
+      "suitable_for": ["Career Changers", "Industry Switchers", "Role Transitions"],
+      "opening_strategy": {
+        "type": "motivation_story",
+        "description": "Explain the career change with authentic motivation",
+        "example": "After {years} years in {previous_field}, I am excited to transition into {new_field} and bring a unique perspective to the {job_title} role at {company_name}. My decision to pivot is driven by {genuine_reason}, and I believe my background in {previous_field} provides valuable skills that translate directly to this opportunity."
+      },
+      "body_structure": {
+        "type": "transferable_skills",
+        "paragraphs": 2,
+        "description": "Connect previous experience to new role requirements",
+        "focus": ["transferable_skills", "relevant_training_or_projects", "cross_functional_experience", "enthusiasm_for_new_field"]
+      },
+      "closing_strategy": {
+        "type": "commitment_and_learning",
+        "description": "Express commitment and readiness to contribute",
+        "example": "I am committed to bringing my diverse skill set and fresh perspective to {company_name}. I would welcome the opportunity to discuss how my unique background can add value to your team."
+      }
+    },
+    {
+      "id": "referral",
+      "name": "Referral-Based",
+      "description": "Leverages a mutual connection or referral to establish credibility",
+      "tone": "professional",
+      "default_length": "medium",
+      "suitable_for": ["Any role with a referral"],
+      "opening_strategy": {
+        "type": "referral_connection",
+        "description": "Lead with the referral to establish immediate credibility",
+        "example": "{Referral_name}, {their_title} at {company_name}, suggested I reach out regarding the {job_title} position. {Referral_name} and I {how_you_know_them}, and based on their description of the role and your team culture, I am excited about the opportunity to contribute my {relevant_skills} to {company_name}."
+      },
+      "body_structure": {
+        "type": "credibility_building",
+        "paragraphs": 2,
+        "description": "Build on the referral's recommendation with concrete qualifications",
+        "focus": ["relevant_experience", "shared_connections_or_values", "specific_qualifications"]
+      },
+      "closing_strategy": {
+        "type": "referral_acknowledgment",
+        "description": "Thank the referral and express interest in next steps",
+        "example": "Thank you for considering my application. I'm grateful to {referral_name} for the introduction, and I look forward to the opportunity to discuss how I can contribute to your team."
+      }
+    },
+    {
+      "id": "cold_application",
+      "name": "Cold Application",
+      "description": "Proactive outreach when no position is advertised",
+      "tone": "professional",
+      "default_length": "short",
+      "suitable_for": ["Speculative applications", "Networking outreach"],
+      "opening_strategy": {
+        "type": "company_research",
+        "description": "Demonstrate knowledge of and interest in the company",
+        "example": "I have been following {company_name}'s work in {specific_area} with great interest, particularly {specific_project_or_achievement}. While I recognize you may not have an open {job_title} position at this time, I wanted to reach out to explore potential opportunities to contribute to your team."
+      },
+      "body_structure": {
+        "type": "value_proposition",
+        "paragraphs": 1,
+        "description": "Concise statement of what you can offer",
+        "focus": ["unique_value", "relevant_expertise", "potential_contributions"]
+      },
+      "closing_strategy": {
+        "type": "exploratory_conversation",
+        "description": "Request for informational meeting or future consideration",
+        "example": "I would appreciate the opportunity to have a brief conversation about your team's needs and how my background might be a good fit, either now or in the future. Thank you for your time and consideration."
+      }
+    },
+    {
+      "id": "networking_followup",
+      "name": "Follow-up After Networking",
+      "description": "Maintains momentum after meeting at an event or informational interview",
+      "tone": "conversational",
+      "default_length": "short",
+      "suitable_for": ["Post-event applications", "After informational interviews"],
+      "opening_strategy": {
+        "type": "event_recall",
+        "description": "Reference the networking interaction to jog memory",
+        "example": "It was a pleasure meeting you at {event_name} last {timeframe}. Our conversation about {specific_topic} was particularly enlightening, and I was excited to learn about the {job_title} opening at {company_name}. I am writing to formally apply for the position."
+      },
+      "body_structure": {
+        "type": "conversation_continuation",
+        "paragraphs": 2,
+        "description": "Build on the networking conversation with qualifications",
+        "focus": ["conversation_points", "aligned_experience", "specific_interest_based_on_conversation"]
+      },
+      "closing_strategy": {
+        "type": "appreciation_and_continuation",
+        "description": "Thank them for their time and express desire to continue dialogue",
+        "example": "Thank you again for your time and insights at {event_name}. I'm excited about the possibility of joining {company_name} and would welcome the opportunity to continue our conversation about how I can contribute to your team."
+      }
+    }
+  ],
+  "tone_guidelines": {
+    "formal": {
+      "characteristics": ["Professional language", "Complete sentences", "Minimal contractions", "Traditional structure"],
+      "avoid": ["Casual language", "Excessive exclamation points", "Emojis", "Slang"]
+    },
+    "professional": {
+      "characteristics": ["Business-appropriate", "Clear and confident", "Some personality", "Modern phrasing"],
+      "avoid": ["Overly stiff language", "Too casual", "Jargon without context"]
+    },
+    "conversational": {
+      "characteristics": ["Warm and approachable", "Natural voice", "Strategic use of contractions", "Engaging"],
+      "avoid": ["Overly casual", "Unprofessional tone", "Excessive informality"]
+    },
+    "enthusiastic": {
+      "characteristics": ["Energy and excitement", "Positive language", "Passion for the role", "Authentic enthusiasm"],
+      "avoid": ["Over-the-top language", "Desperation", "Insincerity"]
+    }
+  },
+  "length_guidelines": {
+    "short": {
+      "word_count": "150-250",
+      "paragraphs": "3-4",
+      "use_case": "Cold applications, networking follow-ups, quick applications"
+    },
+    "medium": {
+      "word_count": "250-400",
+      "paragraphs": "4-5",
+      "use_case": "Standard job applications, most positions"
+    },
+    "long": {
+      "word_count": "400-500",
+      "paragraphs": "5-6",
+      "use_case": "Executive positions, academic roles, detailed explanations needed"
+    }
+  },
+  "focus_area_definitions": {
+    "leadership": "Highlight team management, mentoring, strategic decision-making",
+    "technical": "Emphasize technical skills, tools, methodologies, certifications",
+    "results": "Focus on quantified achievements, metrics, business impact",
+    "creativity": "Showcase innovative thinking, design, creative problem-solving",
+    "communication": "Highlight presentation skills, writing, stakeholder management",
+    "collaboration": "Emphasize teamwork, cross-functional projects, relationship building"
+  }
+}

@@ -24,6 +24,7 @@ from adaptive_resume.models.generated_resume import GeneratedResume, GeneratedCo
 from adaptive_resume.models.templates import ResumeTemplate, CoverLetterSection, create_default_template
 from adaptive_resume.models.job_posting import JobPosting
 from adaptive_resume.models.tailored_resume import TailoredResumeModel
+from adaptive_resume.models.cover_letter import CoverLetter
 
 __all__ = [
     # Base
@@ -48,6 +49,7 @@ __all__ = [
     'JobApplication',
     'GeneratedResume',
     'GeneratedCoverLetter',
+    'CoverLetter',
 
     # Job posting analysis
     'JobPosting',

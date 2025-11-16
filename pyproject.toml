@@ -88,7 +88,8 @@ python_functions = ["test_*"]
 # default test run usable in minimal environments where the plugin might not be
 # installed, we do not force coverage options here. Developers can still request
 # coverage explicitly via ``pytest --cov`` when the plugin is available.
-addopts = ["-ra"]
+# Disable pytest-randomly's resetting of random seeds to avoid conflicts with spacy/thinc
+addopts = ["-ra", "--randomly-dont-reset-seed"]
 
 [tool.mypy]
 python_version = "3.11"

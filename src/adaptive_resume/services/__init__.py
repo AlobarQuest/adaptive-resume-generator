@@ -19,6 +19,7 @@ from .nlp_analyzer import NLPAnalyzer, JobRequirements
 from .matching_engine import MatchingEngine, ScoredAccomplishment
 from .resume_generator import ResumeGenerator, TailoredResume
 from .resume_pdf_generator import ResumePDFGenerator, ResumePDFGeneratorError
+from .cover_letter_generation_service import CoverLetterGenerationService
 
 __version__ = '0.1.0'
 
@@ -46,4 +47,5 @@ __all__ = [
     'TailoredResume',
     'ResumePDFGenerator',
     'ResumePDFGeneratorError',
+    'CoverLetterGenerationService',
 ]

@@ -53,6 +53,11 @@ class JobPosting(Base):
         back_populates='job_posting',
         cascade='all, delete-orphan'
     )
+    cover_letters = relationship(
+        'CoverLetter',
+        back_populates='job_posting',
+        cascade='all, delete-orphan'
+    )
 
     def __repr__(self):
         return f"<JobPosting(id={self.id}, title='{self.job_title}', company='{self.company_name}')>"

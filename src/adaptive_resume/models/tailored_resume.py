@@ -49,6 +49,7 @@ class TailoredResumeModel(Base):
     # Relationships
     profile = relationship('Profile', back_populates='tailored_resumes')
     job_posting = relationship('JobPosting', back_populates='tailored_resumes')
+    cover_letters = relationship('CoverLetter', back_populates='tailored_resume', cascade='all, delete-orphan')
 
     def __repr__(self):
         return f"<TailoredResumeModel(id={self.id}, profile_id={self.profile_id}, job_posting_id={self.job_posting_id})>"

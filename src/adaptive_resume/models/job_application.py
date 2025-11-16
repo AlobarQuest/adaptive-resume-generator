@@ -54,6 +54,7 @@ class JobApplication(Base):
     profile = relationship('Profile', back_populates='job_applications')
     generated_resumes = relationship('GeneratedResume', back_populates='job_application', cascade='all, delete-orphan')
     generated_cover_letters = relationship('GeneratedCoverLetter', back_populates='job_application', cascade='all, delete-orphan')
+    cover_letter = relationship('CoverLetter', back_populates='job_application', uselist=False)
     
     # Valid status values
     STATUS_APPLIED = 'applied'
