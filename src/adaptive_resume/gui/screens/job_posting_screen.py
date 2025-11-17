@@ -89,6 +89,9 @@ class ProcessingWorker(QThread):
                 company_name=self.company_name,
             )
 
+            # Store the raw job text in the result for database persistence
+            result.raw_job_text = self.job_text
+
             self.progress.emit("Complete!")
             self.finished.emit(result)
 

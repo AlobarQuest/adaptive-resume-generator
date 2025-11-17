@@ -4,7 +4,10 @@ from __future__ import annotations
 
 __all__ = ["MainWindow"]
 
+import logging
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 try:  # pragma: no cover - import guard depends on platform runtime
     from PyQt6.QtCore import Qt
@@ -268,13 +271,16 @@ class MainWindow(QMainWindow):
                 profile_id=tailored_resume.profile_id,
                 company_name=tailored_resume.company_name or "Unknown Company",
                 job_title=tailored_resume.job_title or "Unknown Position",
-                raw_text="",  # We don't have the original text here
-                requirements_json="{}",  # Empty requirements
+                raw_text=tailored_resume.raw_job_text or "",  # Original job posting text
+                requirements_json="{}",  # Empty requirements (could be populated later)
+                source="paste",  # Track that this was pasted/typed in
             )
             session.add(job_posting)
             session.commit()
             session.refresh(job_posting)
             job_posting_id = job_posting.id
+
+            logger.info(f"Created new JobPosting: id={job_posting.id}, company={job_posting.company_name}, title={job_posting.job_title}")
 
         # Create TailoredResumeModel from the dataclass
         selected_ids = [acc.bullet_id for acc in tailored_resume.selected_accomplishments]
@@ -293,6 +299,8 @@ class MainWindow(QMainWindow):
         session.add(resume_model)
         session.commit()
         session.refresh(resume_model)
+
+        logger.info(f"Created TailoredResumeModel: id={resume_model.id}, job_posting_id={job_posting_id}, accomplishments={len(selected_ids)}")
 
         # Update the dataclass with database IDs for use in results screen
         tailored_resume.job_posting_id = job_posting_id

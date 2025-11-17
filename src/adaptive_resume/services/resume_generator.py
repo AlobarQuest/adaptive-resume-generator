@@ -34,6 +34,8 @@ class TailoredResume:
         created_at: When this tailored resume was created
         job_title: Target job title
         company_name: Target company name
+        raw_job_text: Original job posting text (for database persistence)
+        id: Database ID after persistence (set by main_window)
     """
     profile_id: int
     job_posting_id: Optional[int] = None
@@ -45,6 +47,8 @@ class TailoredResume:
     created_at: datetime = field(default_factory=datetime.now)
     job_title: str = ""
     company_name: str = ""
+    raw_job_text: str = ""  # Original job posting text
+    id: Optional[int] = None  # Database ID after persistence
 
 
 class ResumeGeneratorError(Exception):
