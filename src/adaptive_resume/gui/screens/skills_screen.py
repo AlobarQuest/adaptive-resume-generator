@@ -83,7 +83,7 @@ class SkillsScreen(BaseScreen):
 
     def get_selected_skill_id(self) -> Optional[int]:
         """Get the ID of the currently selected skill."""
-        current_item = self.skills_panel.skills_list.currentItem()
+        current_item = self.skills_panel.skill_list.currentItem()
         if current_item is None:
             return None
         return int(current_item.data(Qt.ItemDataRole.UserRole))
