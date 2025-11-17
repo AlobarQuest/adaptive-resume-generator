@@ -57,6 +57,7 @@ class NavigationMenu(QWidget):
             ("education", "🎓 Manage Education"),
             ("skills", "🎯 Manage Skills"),
             ("upload", "📄 Upload Job Posting"),
+            ("applications", "📝 Track Applications"),
             ("review", "📋 Review and Print"),
         ]
         

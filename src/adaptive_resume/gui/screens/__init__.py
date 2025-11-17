@@ -10,6 +10,7 @@ from .skills_screen import SkillsScreen
 from .job_posting_screen import JobPostingScreen
 from .tailoring_results_screen import TailoringResultsScreen
 from .review_print_screen import ReviewPrintScreen
+from .applications_screen import ApplicationsScreen
 
 __all__ = [
     "BaseScreen",
@@ -22,4 +23,5 @@ __all__ = [
     "JobPostingScreen",
     "TailoringResultsScreen",
     "ReviewPrintScreen",
+    "ApplicationsScreen",
 ]

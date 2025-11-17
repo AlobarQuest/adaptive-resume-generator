@@ -15,6 +15,8 @@ from .cover_letter_editor_dialog import CoverLetterEditorDialog
 from .resume_variants_dialog import ResumeVariantsDialog
 from .job_import_dialog import JobImportDialog
 from .job_preview_dialog import JobPreviewDialog
+from .application_detail_dialog import ApplicationDetailDialog
+from .add_application_dialog import AddApplicationDialog
 
 __all__ = [
     "ProfileDialog",
@@ -33,4 +35,6 @@ __all__ = [
     "ResumeVariantsDialog",
     "JobImportDialog",
     "JobPreviewDialog",
+    "ApplicationDetailDialog",
+    "AddApplicationDialog",
 ]
