@@ -625,5 +625,9 @@ class ApplicationsScreen(QWidget):
             self.service.delete_application(application_id)
             self.load_applications()
 
+    def on_screen_shown(self):
+        """Called when the screen is shown - refresh data."""
+        self.load_applications()
+
 
 __all__ = ['ApplicationsScreen']

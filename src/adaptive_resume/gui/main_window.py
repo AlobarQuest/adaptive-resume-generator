@@ -245,7 +245,52 @@ class MainWindow(QMainWindow):
 
     def _on_tailored_resume_ready(self, tailored_resume) -> None:
         """Handle when tailored resume is ready from job posting analysis."""
-        self.current_tailored_resume_id = tailored_resume.id
+        # The tailored_resume from ProcessingWorker is a TailoredResume dataclass
+        # We need to persist it to the database to get an ID for PDF generation, etc.
+        import json
+        from adaptive_resume.models.tailored_resume import TailoredResumeModel
+        from adaptive_resume.models.job_posting import JobPosting
+        from adaptive_resume.gui.database_manager import DatabaseManager
+
+        session = DatabaseManager.get_session()
+
+        # First, save the JobPosting if it doesn't exist
+        job_posting_id = tailored_resume.job_posting_id
+        if job_posting_id is None:
+            # Create and save a new job posting
+            # We'll create a minimal job posting record for tracking
+            job_posting = JobPosting(
+                profile_id=tailored_resume.profile_id,
+                company_name=tailored_resume.company_name or "Unknown Company",
+                job_title=tailored_resume.job_title or "Unknown Position",
+                original_text="",  # We don't have the original text here
+                requirements_json="{}",  # Empty requirements
+                parsed_skills_json="[]",
+            )
+            session.add(job_posting)
+            session.commit()
+            session.refresh(job_posting)
+            job_posting_id = job_posting.id
+
+        # Create TailoredResumeModel from the dataclass
+        selected_ids = [acc.bullet_point.id for acc in tailored_resume.selected_accomplishments]
+
+        resume_model = TailoredResumeModel(
+            profile_id=tailored_resume.profile_id,
+            job_posting_id=job_posting_id,
+            selected_accomplishment_ids=json.dumps(selected_ids),
+            skill_coverage_json=json.dumps(tailored_resume.skill_coverage),
+            coverage_percentage=tailored_resume.coverage_percentage,
+            gaps_json=json.dumps(tailored_resume.gaps),
+            recommendations_json=json.dumps(tailored_resume.recommendations),
+            match_score=getattr(tailored_resume, 'match_score', None),
+        )
+
+        session.add(resume_model)
+        session.commit()
+        session.refresh(resume_model)
+
+        self.current_tailored_resume_id = resume_model.id
         self.results_screen.display_results(tailored_resume)
         self._navigate_to("results")
 
