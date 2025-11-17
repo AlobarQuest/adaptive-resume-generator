@@ -273,7 +273,7 @@ class MainWindow(QMainWindow):
             job_posting_id = job_posting.id
 
         # Create TailoredResumeModel from the dataclass
-        selected_ids = [acc.bullet_point.id for acc in tailored_resume.selected_accomplishments]
+        selected_ids = [acc.bullet_id for acc in tailored_resume.selected_accomplishments]
 
         resume_model = TailoredResumeModel(
             profile_id=tailored_resume.profile_id,
