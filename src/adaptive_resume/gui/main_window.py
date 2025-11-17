@@ -342,13 +342,8 @@ class MainWindow(QMainWindow):
 
     def _import_resume(self) -> None:
         """Import resume to create or update a profile."""
-        from adaptive_resume.gui.database_manager import DatabaseManager
-
-        # Get session for the dialog
-        session = DatabaseManager.get_session()
-
         # Open the import dialog
-        dialog = ResumeImportDialog(session, self)
+        dialog = ResumeImportDialog(self)
         if dialog.exec() == int(QDialog.DialogCode.Accepted):
             # The dialog handles the import internally
             # After successful import, refresh all screens
