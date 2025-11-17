@@ -290,6 +290,10 @@ class MainWindow(QMainWindow):
         session.commit()
         session.refresh(resume_model)
 
+        # Update the dataclass with database IDs for use in results screen
+        tailored_resume.job_posting_id = job_posting_id
+        tailored_resume.id = resume_model.id
+
         self.current_tailored_resume_id = resume_model.id
         self.results_screen.display_results(tailored_resume)
         self._navigate_to("results")

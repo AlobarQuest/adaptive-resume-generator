@@ -717,14 +717,74 @@ class CoverLetterEditorDialog(QDialog):
             filename: Output filename
             content: Cover letter content
         """
-        # For now, show a message that PDF export will be implemented
-        # This would integrate with ReportLab similar to resume PDF generation
-        QMessageBox.information(
-            self,
-            "PDF Export",
-            "PDF export functionality will be implemented in the next update.\n"
-            "For now, please use HTML export and print to PDF from your browser."
-        )
+        try:
+            from reportlab.lib.pagesizes import letter
+            from reportlab.lib.units import inch
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.enums import TA_LEFT, TA_JUSTIFY
+
+            # Create PDF document
+            doc = SimpleDocTemplate(
+                filename,
+                pagesize=letter,
+                rightMargin=0.75*inch,
+                leftMargin=0.75*inch,
+                topMargin=0.75*inch,
+                bottomMargin=0.75*inch
+            )
+
+            # Container for the 'Flowable' objects
+            story = []
+
+            # Get default styles
+            styles = getSampleStyleSheet()
+
+            # Create custom styles
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Heading1'],
+                fontSize=14,
+                textColor='#1a1a1a',
+                spaceAfter=12,
+                alignment=TA_LEFT
+            )
+
+            body_style = ParagraphStyle(
+                'CustomBody',
+                parent=styles['BodyText'],
+                fontSize=11,
+                leading=14,
+                textColor='#333333',
+                alignment=TA_JUSTIFY,
+                spaceAfter=12
+            )
+
+            # Split content into paragraphs
+            paragraphs = content.strip().split('\n\n')
+
+            for i, para_text in enumerate(paragraphs):
+                if not para_text.strip():
+                    continue
+
+                # First paragraph could be title/heading if it's short and not too long
+                if i == 0 and len(para_text) < 100 and '\n' not in para_text:
+                    p = Paragraph(para_text.strip(), title_style)
+                else:
+                    # Replace single newlines with <br/> tags for ReportLab
+                    formatted_text = para_text.replace('\n', '<br/>')
+                    p = Paragraph(formatted_text, body_style)
+
+                story.append(p)
+                story.append(Spacer(1, 0.1*inch))
+
+            # Build PDF
+            doc.build(story)
+
+        except ImportError:
+            raise Exception("ReportLab is required for PDF export. Please install it with: pip install reportlab")
+        except Exception as e:
+            raise Exception(f"Failed to generate PDF: {str(e)}")
 
     def _on_save(self):
         """Save cover letter to database."""
