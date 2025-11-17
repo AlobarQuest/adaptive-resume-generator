@@ -81,7 +81,7 @@ def init_db():
     from adaptive_resume.models import (
         profile, job, bullet_point, tag, skill,
         education, certification, job_application,
-        generated_resume, generated_cover_letter, templates
+        generated_resume, templates, job_posting, tailored_resume, cover_letter
     )
     
     # Create all tables

@@ -159,6 +159,16 @@ class TemplateRegistry:
         return name in cls._templates
 
     @classmethod
+    def clear(cls) -> None:
+        """Clear all registered templates.
+
+        This is primarily used for testing to reset the registry state.
+        """
+        cls._templates.clear()
+        cls._specs.clear()
+        logger.info("Cleared template registry")
+
+    @classmethod
     def unregister(cls, name: str) -> None:
         """Unregister a template.
 
