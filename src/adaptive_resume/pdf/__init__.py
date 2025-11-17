@@ -10,6 +10,9 @@ from .base_template import ResumeSection, TemplateSpec, BaseResumeTemplate
 from .template_registry import TemplateRegistry, TemplateRegistryError
 from . import pdf_utils
 
+# Import templates to register them with TemplateRegistry
+from . import templates  # noqa: F401 - imported for side effects (template registration)
+
 __version__ = '0.1.0'
 
 __all__ = [
