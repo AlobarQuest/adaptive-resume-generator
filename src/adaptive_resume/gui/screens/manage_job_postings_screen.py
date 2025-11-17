@@ -139,9 +139,8 @@ class ManageJobPostingsScreen(BaseScreen):
     """Screen for managing saved job postings."""
 
     def __init__(self, parent: Optional[QWidget] = None):
-        super().__init__(parent)
         self.all_postings = []
-        self._setup_ui()
+        super().__init__(parent)  # This calls _setup_ui() automatically
 
     def _setup_ui(self):
         """Setup the user interface."""
@@ -210,20 +209,25 @@ class ManageJobPostingsScreen(BaseScreen):
 
     def on_screen_shown(self):
         """Called when the screen is shown."""
+        logger.info("ManageJobPostingsScreen.on_screen_shown() called")
         self._load_job_postings()
 
     def _load_job_postings(self):
         """Load all job postings from database."""
+        logger.info("_load_job_postings() called - starting job posting query")
         try:
             # Get a fresh session each time
             session = DatabaseManager.get_session()
+            logger.info(f"Got database session: {session}")
 
             # Query all job postings for current profile, ordered by date (newest first)
             self.all_postings = session.query(JobPosting).filter_by(
                 profile_id=1  # DEFAULT_PROFILE_ID
             ).order_by(JobPosting.uploaded_at.desc()).all()
 
-            logger.info(f"Loaded {len(self.all_postings)} job postings from database")
+            logger.info(f"Query completed - Loaded {len(self.all_postings)} job postings from database")
+            if self.all_postings:
+                logger.info(f"First posting: company={self.all_postings[0].company_name}, title={self.all_postings[0].job_title}")
 
             self._display_postings(self.all_postings)
             self.summary_label.setText(f"Total job postings: {len(self.all_postings)}")
@@ -234,9 +238,13 @@ class ManageJobPostingsScreen(BaseScreen):
 
     def _display_postings(self, postings: list[JobPosting]):
         """Display job postings in the table."""
+        logger.info(f"_display_postings() called with {len(postings)} postings")
+        logger.info(f"Table widget: {self.table}, current row count: {self.table.rowCount()}")
         self.table.setRowCount(0)
+        logger.info(f"Table cleared, row count now: {self.table.rowCount()}")
 
         for row, posting in enumerate(postings):
+            logger.info(f"Adding row {row}: {posting.company_name} - {posting.job_title}")
             self.table.insertRow(row)
 
             # Company
