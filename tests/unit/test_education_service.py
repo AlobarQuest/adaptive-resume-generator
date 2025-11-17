@@ -22,12 +22,12 @@ def test_create_list_and_update_education(session):
 
     service = EducationService(session)
     education = service.create_education(
-        profile_id=profile.id,
         institution="Georgia Tech",
         degree="BS Computer Science",
         start_date=date(2010, 8, 1),
         end_date=date(2014, 5, 1),
         gpa=3.9,
+        profile_id=profile.id,
     )
 
     assert education.id is not None
@@ -40,7 +40,7 @@ def test_create_list_and_update_education(session):
     assert updated.honors == "Magna Cum Laude"
     assert float(updated.gpa) == 3.95
 
-    service.reorder_education(profile.id, [education.id])
+    service.reorder_education([education.id], profile_id=profile.id)
 
     service.delete_education(education.id)
     with pytest.raises(EducationNotFoundError):
@@ -58,23 +58,23 @@ def test_create_education_validates_input(session):
     service = EducationService(session)
 
     with pytest.raises(EducationValidationError):
-        service.create_education(profile.id, institution="", degree="BBA")
+        service.create_education(institution="", degree="BBA", profile_id=profile.id)
 
     with pytest.raises(EducationValidationError):
         service.create_education(
-            profile.id,
             institution="State University",
             degree="MBA",
             start_date=date(2020, 1, 1),
             end_date=date(2019, 1, 1),
+            profile_id=profile.id,
         )
 
     with pytest.raises(EducationValidationError):
         service.update_education(
             service.create_education(
-                profile.id,
                 institution="State University",
                 degree="MBA",
+                profile_id=profile.id,
             ).id,
             gpa=4.5,
         )

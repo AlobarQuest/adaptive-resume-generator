@@ -29,6 +29,7 @@ except Exception as exc:  # pragma: no cover - handled during runtime import
     raise ImportError("PyQt6 is required to use the GUI components") from exc
 
 from adaptive_resume.models import Profile, BulletPoint
+from adaptive_resume.models.base import DEFAULT_PROFILE_ID
 from adaptive_resume.services.job_service import JobService
 from adaptive_resume.services.profile_service import ProfileService
 from adaptive_resume.services.skill_service import SkillService
@@ -59,6 +60,7 @@ from .screens import (
     JobPostingScreen,
     ReviewPrintScreen,
     TailoringResultsScreen,
+    ApplicationsScreen,
 )
 
 
@@ -80,14 +82,17 @@ class MainWindow(QMainWindow):
         self.skill_service = skill_service or SkillService(profile_service.session)
         self.education_service = education_service or EducationService(profile_service.session)
         self.certification_service = certification_service or CertificationService(profile_service.session)
-        self.current_profile_id: Optional[int] = None
+        # Single-profile architecture: always use DEFAULT_PROFILE_ID
+        self.current_profile_id: int = DEFAULT_PROFILE_ID
         self.current_tailored_resume_id: Optional[int] = None
 
-        self.setWindowTitle("Adaptive Resume Generator")
         self.resize(1200, 720)
 
+        # Ensure profile exists, create if needed
+        self._ensure_profile()
+
         self._setup_ui()
-        self._load_initial_profile()
+        self._update_window_title()
 
     # ------------------------------------------------------------------
     # UI construction helpers
@@ -117,13 +122,12 @@ class MainWindow(QMainWindow):
         self.dashboard_screen.navigate_to_upload.connect(lambda: self._navigate_to("upload"))
         self.dashboard_screen.navigate_to_companies.connect(lambda: self._navigate_to("companies"))
         self.dashboard_screen.navigate_to_general.connect(lambda: self._navigate_to("general"))
-        self.dashboard_screen.navigate_to_profile_creation.connect(self._add_profile)
+        self.dashboard_screen.navigate_to_profile_creation.connect(self._edit_profile)  # Changed to edit existing profile
 
         self.profile_screen = ProfileManagementScreen(
             profile_service=self.profile_service,
         )
-        self.profile_screen.select_profile_requested.connect(self._set_current_profile)
-        self.profile_screen.add_profile_requested.connect(self._add_profile)
+        # Note: ProfileManagementScreen will be repurposed to just show/edit current profile
         self.profile_screen.edit_profile_requested.connect(self._edit_profile)
         self.profile_screen.import_resume_requested.connect(self._import_resume)
 
@@ -162,6 +166,9 @@ class MainWindow(QMainWindow):
 
         self.review_screen = ReviewPrintScreen()
 
+        self.applications_screen = ApplicationsScreen()
+        self.applications_screen.application_selected.connect(self._on_application_selected)
+
         # Add screens to stacked widget
         self.screens = {
             "dashboard": self.dashboard_screen,
@@ -171,6 +178,7 @@ class MainWindow(QMainWindow):
             "education": self.education_screen,
             "skills": self.skills_screen,
             "upload": self.upload_screen,
+            "applications": self.applications_screen,
             "results": self.results_screen,
             "review": self.review_screen,
         }
@@ -248,134 +256,53 @@ class MainWindow(QMainWindow):
             current_screen.on_screen_shown()
 
     # ------------------------------------------------------------------
-    # Profile management
+    # Profile management (single-profile mode)
     # ------------------------------------------------------------------
-    def _load_initial_profile(self) -> None:
-        """Load the first available profile or create one."""
-        profiles = (
-            self.profile_service.session.query(Profile)
-            .order_by(Profile.last_name.asc(), Profile.first_name.asc())
-            .all()
-        )
+    def _ensure_profile(self) -> None:
+        """Ensure a default profile exists, creating one if needed."""
+        profile = self.profile_service.get_default_profile()
 
-        if profiles:
-            self._set_current_profile(profiles[0].id)
-        else:
-            self.current_profile_id = None
-            self._update_window_title()
+        if profile is None:
+            # No profile exists - check if this is first run
+            # The welcome wizard will handle profile creation
+            # For now, create a minimal placeholder
+            profile = self.profile_service.ensure_profile_exists()
 
-    def _show_profile_selector(self) -> None:
-        """Show profile selector dialog."""
-        # Create a simple profile selector dialog
-        from PyQt6.QtWidgets import QDialog, QVBoxLayout, QListWidget, QPushButton, QHBoxLayout
-
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Select Profile")
-        dialog.setMinimumWidth(400)
-        dialog.setMinimumHeight(300)
-
-        layout = QVBoxLayout(dialog)
-
-        # Profile list
-        profile_list = QListWidget()
-        profiles = (
-            self.profile_service.session.query(Profile)
-            .order_by(Profile.last_name.asc(), Profile.first_name.asc())
-            .all()
-        )
-
-        for profile in profiles:
-            label = f"{profile.first_name} {profile.last_name}"
-            item = QListWidgetItem(label)
-            item.setData(Qt.ItemDataRole.UserRole, profile.id)
-            profile_list.addItem(item)
-
-            if profile.id == self.current_profile_id:
-                profile_list.setCurrentItem(item)
-
-        layout.addWidget(profile_list)
-
-        # Buttons
-        button_layout = QHBoxLayout()
-
-        select_btn = QPushButton("Select")
-        select_btn.setDefault(True)
-        select_btn.clicked.connect(dialog.accept)
-        button_layout.addWidget(select_btn)
-
-        cancel_btn = QPushButton("Cancel")
-        cancel_btn.clicked.connect(dialog.reject)
-        button_layout.addWidget(cancel_btn)
-
-        layout.addLayout(button_layout)
-
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            current_item = profile_list.currentItem()
-            if current_item:
-                profile_id = int(current_item.data(Qt.ItemDataRole.UserRole))
-                self._set_current_profile(profile_id)
-
-    def _set_current_profile(self, profile_id: int) -> None:
-        """Set the current profile and update all screens."""
-        self.current_profile_id = profile_id
-        self._update_window_title()
-
-        # Update all screens with the new profile
-        for screen in self.screens.values():
-            if hasattr(screen, 'set_profile'):
-                screen.set_profile(profile_id)
-
-        # Refresh current screen
-        self._refresh_current_screen()
-
-        self.statusBar().showMessage(f"Loaded profile #{profile_id}", 3000)
+            # Show welcome dialog to complete profile setup
+            QMessageBox.information(
+                self,
+                "Welcome!",
+                "Welcome to Adaptive Resume Generator!\n\n"
+                "Let's get started by setting up your profile.",
+                QMessageBox.StandardButton.Ok
+            )
+            # Open profile edit dialog
+            self._edit_profile()
 
     def _update_window_title(self) -> None:
         """Update window title with current profile name."""
-        if self.current_profile_id:
-            profile = self.profile_service.get_profile_by_id(self.current_profile_id)
-            if profile:
+        try:
+            profile = self.profile_service.get_default_profile()
+            if profile and profile.first_name and profile.last_name:
                 self.setWindowTitle(
                     f"Adaptive Resume Generator - {profile.first_name} {profile.last_name}"
                 )
-        else:
+            else:
+                self.setWindowTitle("Adaptive Resume Generator")
+        except Exception:
             self.setWindowTitle("Adaptive Resume Generator")
 
     # ------------------------------------------------------------------
     # Dialog helpers
     # ------------------------------------------------------------------
-    def _add_profile(self) -> None:
-        """Add a new profile."""
-        dialog = ProfileDialog(self)
-        if dialog.exec() == int(QDialog.DialogCode.Accepted):
-            data = dialog.get_result()
-            try:
-                profile = self.profile_service.create_profile(
-                    first_name=data.first_name,
-                    last_name=data.last_name,
-                    email=data.email,
-                    phone=data.phone or None,
-                    city=data.city or None,
-                    state=data.state or None,
-                    linkedin_url=data.linkedin_url or None,
-                    portfolio_url=data.portfolio_url or None,
-                    professional_summary=data.professional_summary or None,
-                )
-            except Exception as exc:  # pragma: no cover
-                QMessageBox.critical(self, "Error", str(exc))
-                return
-
-            self._set_current_profile(profile.id)
-            self.statusBar().showMessage("Profile created successfully", 3000)
+    # Removed _add_profile() - single-profile mode doesn't allow creating new profiles
 
     def _edit_profile(self) -> None:
         """Edit the current profile."""
-        profile_id = self.current_profile_id
-        if profile_id is None:
-            QMessageBox.information(self, "No Profile", "Please select a profile first.")
+        profile = self.profile_service.get_default_profile()
+        if not profile:
+            QMessageBox.warning(self, "Error", "Unable to load profile.")
             return
-
-        profile = self.profile_service.get_profile_by_id(profile_id)
         dialog = ProfileDialog(
             self,
             profile={
@@ -394,7 +321,7 @@ class MainWindow(QMainWindow):
             data = dialog.get_result()
             try:
                 self.profile_service.update_profile(
-                    profile_id=profile_id,
+                    profile_id=DEFAULT_PROFILE_ID,
                     first_name=data.first_name,
                     last_name=data.last_name,
                     email=data.email,
@@ -424,26 +351,20 @@ class MainWindow(QMainWindow):
         dialog = ResumeImportDialog(session, self)
         if dialog.exec() == int(QDialog.DialogCode.Accepted):
             # The dialog handles the import internally
-            # After successful import, refresh the profile list and set the new profile
-            imported_profile_id = dialog.imported_profile_id
-            if imported_profile_id:
-                self._set_current_profile(imported_profile_id)
-                self.statusBar().showMessage("Resume imported successfully!", 3000)
-                # Navigate to profile screen to show the results
-                self._navigate_to("profile")
+            # After successful import, refresh all screens
+            self._update_window_title()
+            self._refresh_current_screen()
+            self.statusBar().showMessage("Resume imported successfully!", 3000)
+            # Navigate to profile screen to show the results
+            self._navigate_to("profile")
 
     def _add_job(self) -> None:
         """Add a new job."""
-        if self.current_profile_id is None:
-            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
-            return
-
         dialog = JobDialog(self)
         if dialog.exec() == int(QDialog.DialogCode.Accepted):
             data = dialog.get_result()
             try:
                 job = self.job_service.create_job(
-                    profile_id=self.current_profile_id,
                     company_name=data.company_name,
                     job_title=data.job_title,
                     start_date=data.start_date,
@@ -465,11 +386,6 @@ class MainWindow(QMainWindow):
 
     def _edit_job(self) -> None:
         """Edit the selected job."""
-        profile_id = self.current_profile_id
-        if profile_id is None:
-            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
-            return
-
         # Get current job from companies screen
         jobs_view = self.companies_screen.get_jobs_view()
         job_id = jobs_view.current_job_id()
@@ -515,11 +431,6 @@ class MainWindow(QMainWindow):
 
     def _delete_job(self) -> None:
         """Delete the selected job/role."""
-        profile_id = self.current_profile_id
-        if profile_id is None:
-            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
-            return
-
         # Get current job from companies screen
         jobs_view = self.companies_screen.get_jobs_view()
         job_id = jobs_view.current_job_id()
@@ -551,12 +462,7 @@ class MainWindow(QMainWindow):
 
     def _view_recently_deleted(self) -> None:
         """Open the recently deleted items dialog."""
-        profile_id = self.current_profile_id
-        if profile_id is None:
-            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
-            return
-
-        dialog = RecentlyDeletedDialog(self.job_service, profile_id, self)
+        dialog = RecentlyDeletedDialog(self.job_service, DEFAULT_PROFILE_ID, self)
         dialog.exec()
 
         # Refresh the companies screen in case items were restored
@@ -653,16 +559,11 @@ class MainWindow(QMainWindow):
 
     def _add_education(self) -> None:
         """Add a new education entry."""
-        if self.current_profile_id is None:
-            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
-            return
-
         dialog = EducationDialog(self)
         if dialog.exec() == int(QDialog.DialogCode.Accepted):
             data = dialog.get_result()
             try:
                 self.education_service.create_education(
-                    profile_id=self.current_profile_id,
                     institution=data.institution,
                     degree=data.degree,
                     field_of_study=data.field_of_study,
@@ -680,10 +581,6 @@ class MainWindow(QMainWindow):
 
     def _edit_education(self) -> None:
         """Edit the selected education entry."""
-        if self.current_profile_id is None:
-            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
-            return
-
         education_id = self.education_screen.get_selected_education_id()
         if education_id is None:
             QMessageBox.information(self, "No Education Selected", "Please select an education entry to edit.")
@@ -724,10 +621,6 @@ class MainWindow(QMainWindow):
 
     def _delete_education(self) -> None:
         """Delete the selected education entry."""
-        if self.current_profile_id is None:
-            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
-            return
-
         education_id = self.education_screen.get_selected_education_id()
         if education_id is None:
             QMessageBox.information(self, "No Education Selected", "Please select an education entry to delete.")
@@ -754,16 +647,11 @@ class MainWindow(QMainWindow):
 
     def _add_skill(self) -> None:
         """Add a new skill."""
-        if self.current_profile_id is None:
-            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
-            return
-
         dialog = SkillDialog(self)
         if dialog.exec() == int(QDialog.DialogCode.Accepted):
             data = dialog.get_result()
             try:
                 self.skill_service.create_skill(
-                    profile_id=self.current_profile_id,
                     skill_name=data.skill_name,
                     category=data.category,
                     proficiency_level=data.proficiency_level,
@@ -777,10 +665,6 @@ class MainWindow(QMainWindow):
 
     def _edit_skill(self) -> None:
         """Edit the selected skill."""
-        if self.current_profile_id is None:
-            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
-            return
-
         skill_id = self.skills_screen.get_selected_skill_id()
         if skill_id is None:
             QMessageBox.information(self, "No Skill Selected", "Please select a skill to edit.")
@@ -813,10 +697,6 @@ class MainWindow(QMainWindow):
 
     def _delete_skill(self) -> None:
         """Delete the selected skill."""
-        if self.current_profile_id is None:
-            QMessageBox.information(self, "Select Profile", "Please choose a profile first.")
-            return
-
         skill_id = self.skills_screen.get_selected_skill_id()
         if skill_id is None:
             QMessageBox.information(self, "No Skill Selected", "Please select a skill to delete.")
@@ -919,6 +799,16 @@ class MainWindow(QMainWindow):
         job = self.job_service.get_job_by_id(job_id)
         bullets = self.job_service.get_bullet_points_for_job(job_id)
         jobs_view.show_job_details(job, bullets)
+
+    def _on_application_selected(self, application_id: int) -> None:
+        """Handle application selection.
+
+        Note: The ApplicationsScreen handles opening the detail dialog internally,
+        so this handler is primarily for future use (e.g., cross-screen navigation).
+        """
+        # Currently, ApplicationsScreen handles detail view internally
+        # This is a placeholder for future functionality
+        pass
 
 
 __all__ = ["MainWindow"]

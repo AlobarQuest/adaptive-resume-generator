@@ -18,6 +18,7 @@ except ImportError as exc:
 
 from .base_screen import BaseScreen
 from ..widgets import SkillsPanel
+from adaptive_resume.models.base import DEFAULT_PROFILE_ID
 
 
 class SkillsScreen(BaseScreen):
@@ -34,7 +35,6 @@ class SkillsScreen(BaseScreen):
         parent: Optional[QWidget] = None
     ) -> None:
         self.skill_service = skill_service
-        self.current_profile_id: Optional[int] = None
         super().__init__(parent)
 
     def _setup_ui(self) -> None:
@@ -73,22 +73,13 @@ class SkillsScreen(BaseScreen):
         self.skills_panel = SkillsPanel(self.skill_service)
         layout.addWidget(self.skills_panel)
 
-    def set_profile(self, profile_id: int) -> None:
-        """Set the current profile and load data."""
-        self.current_profile_id = profile_id
-        self._load_data()
-
     def _load_data(self) -> None:
         """Load skills for the current profile."""
-        if not self.current_profile_id:
-            return
-
-        self.skills_panel.load_skills(self.current_profile_id)
+        self.skills_panel.load_skills(DEFAULT_PROFILE_ID)
 
     def on_screen_shown(self) -> None:
         """Refresh data when screen is shown."""
-        if self.current_profile_id:
-            self._load_data()
+        self._load_data()
 
     def get_selected_skill_id(self) -> Optional[int]:
         """Get the ID of the currently selected skill."""

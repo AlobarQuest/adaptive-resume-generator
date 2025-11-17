@@ -1,6 +1,13 @@
 """Services package for Adaptive Resume Generator."""
 
-from .profile_service import ProfileService
+from .profile_service import (
+    ProfileService,
+    ProfileServiceError,
+    ProfileNotFoundError,
+    ProfileValidationError,
+    DuplicateEmailError,
+    MultipleProfilesError
+)
 from .job_service import JobService
 from .skill_service import SkillService
 from .education_service import EducationService
@@ -22,11 +29,17 @@ from .resume_pdf_generator import ResumePDFGenerator, ResumePDFGeneratorError
 from .cover_letter_generation_service import CoverLetterGenerationService
 from .resume_variant_service import ResumeVariantService, VariantComparison
 from .job_import_service import JobImportService, ImportedJob
+from .application_tracking_service import ApplicationTrackingService
 
 __version__ = '0.1.0'
 
 __all__ = [
     'ProfileService',
+    'ProfileServiceError',
+    'ProfileNotFoundError',
+    'ProfileValidationError',
+    'DuplicateEmailError',
+    'MultipleProfilesError',
     'JobService',
     'SkillService',
     'EducationService',
@@ -54,4 +67,5 @@ __all__ = [
     'VariantComparison',
     'JobImportService',
     'ImportedJob',
+    'ApplicationTrackingService',
 ]

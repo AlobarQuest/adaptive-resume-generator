@@ -23,6 +23,7 @@ except ImportError as exc:
 
 from .base_screen import BaseScreen
 from ..views import JobsView
+from adaptive_resume.models.base import DEFAULT_PROFILE_ID
 
 
 class CompaniesRolesScreen(BaseScreen):
@@ -44,7 +45,6 @@ class CompaniesRolesScreen(BaseScreen):
         parent: Optional[QWidget] = None
     ) -> None:
         self.job_service = job_service
-        self.current_profile_id: Optional[int] = None
         self.selected_company: Optional[str] = None
         self.all_jobs = []
         super().__init__(parent)
@@ -175,20 +175,15 @@ class CompaniesRolesScreen(BaseScreen):
 
         self.jobs_view.set_jobs(filtered_jobs)
 
-    def set_profile(self, profile_id: int) -> None:
-        """Set the current profile and load data."""
-        self.current_profile_id = profile_id
-        self._load_companies()
-
     def _load_companies(self) -> None:
         """Load and display all companies."""
-        if not self.current_profile_id or not self.job_service:
+        if not self.job_service:
             self.companies_list.clear()
             self.jobs_view.set_jobs([])
             return
 
         # Get all jobs for the profile
-        self.all_jobs = self.job_service.get_jobs_for_profile(self.current_profile_id)
+        self.all_jobs = self.job_service.get_jobs_for_profile(DEFAULT_PROFILE_ID)
 
         # Extract unique companies with their locations and role counts
         companies_dict = {}
@@ -232,8 +227,7 @@ class CompaniesRolesScreen(BaseScreen):
 
     def on_screen_shown(self) -> None:
         """Refresh data when screen is shown."""
-        if self.current_profile_id:
-            self._load_companies()
+        self._load_companies()
 
 
 __all__ = ["CompaniesRolesScreen"]

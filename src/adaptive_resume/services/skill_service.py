@@ -8,6 +8,7 @@ from typing import Iterable, List, Optional
 from sqlalchemy.orm import Session
 
 from adaptive_resume.models import Profile, Skill
+from adaptive_resume.models.base import DEFAULT_PROFILE_ID
 
 
 class SkillServiceError(Exception):
@@ -33,12 +34,12 @@ class SkillService:
     # ------------------------------------------------------------------
     def create_skill(
         self,
-        profile_id: int,
         skill_name: str,
         category: Optional[str] = None,
         proficiency_level: Optional[str] = None,
         years_experience: Optional[float] = None,
         display_order: Optional[int] = None,
+        profile_id: int = DEFAULT_PROFILE_ID,
     ) -> Skill:
         self._ensure_profile_exists(profile_id)
         self._validate_skill(skill_name, proficiency_level, years_experience)
@@ -107,7 +108,7 @@ class SkillService:
             raise SkillNotFoundError(f"Skill with id {skill_id} not found")
         return skill
 
-    def list_skills_for_profile(self, profile_id: int) -> List[Skill]:
+    def list_skills_for_profile(self, profile_id: int = DEFAULT_PROFILE_ID) -> List[Skill]:
         return (
             self.session.query(Skill)
             .filter_by(profile_id=profile_id)
@@ -115,7 +116,7 @@ class SkillService:
             .all()
         )
 
-    def reorder_skills(self, profile_id: int, ordered_ids: Iterable[int]) -> None:
+    def reorder_skills(self, ordered_ids: Iterable[int], profile_id: int = DEFAULT_PROFILE_ID) -> None:
         skills = self.list_skills_for_profile(profile_id)
         id_map = {skill.id: skill for skill in skills}
         for position, skill_id in enumerate(ordered_ids):

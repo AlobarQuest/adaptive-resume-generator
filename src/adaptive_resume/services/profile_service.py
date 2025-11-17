@@ -3,12 +3,16 @@ ProfileService - Business logic for Profile operations.
 
 This service handles all CRUD operations for user profiles,
 including validation, business rules, and error handling.
+
+Note: Desktop app enforces single-profile design. Only one profile (id=1)
+is allowed per database. Multi-user support is planned for web version.
 """
 
 from typing import Optional, List
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from adaptive_resume.models import Profile
+from adaptive_resume.models.base import DEFAULT_PROFILE_ID
 
 
 class ProfileServiceError(Exception):
@@ -31,21 +35,63 @@ class DuplicateEmailError(ProfileServiceError):
     pass
 
 
+class MultipleProfilesError(ProfileServiceError):
+    """Raised when attempting to create a second profile (single-profile mode)."""
+    pass
+
+
 class ProfileService:
     """
     Service for managing user profiles.
-    
+
     Provides CRUD operations with business logic validation.
+
+    Desktop app enforces single-profile design: only one profile (id=1) per database.
+    Use get_default_profile() or ensure_profile_exists() for single-profile access.
     """
-    
+
     def __init__(self, session: Session):
         """
         Initialize the ProfileService.
-        
+
         Args:
             session: SQLAlchemy database session
         """
         self.session = session
+
+    def get_default_profile(self) -> Optional[Profile]:
+        """
+        Get the default (singleton) profile.
+
+        Returns:
+            Profile or None: The default profile (id=1) if it exists, None otherwise
+        """
+        return self.session.query(Profile).filter_by(id=DEFAULT_PROFILE_ID).first()
+
+    def ensure_profile_exists(self) -> Profile:
+        """
+        Ensure a default profile exists, creating one if necessary.
+
+        If no profile exists, creates a minimal profile that must be completed by user.
+
+        Returns:
+            Profile: The default profile
+        """
+        profile = self.get_default_profile()
+
+        if profile is None:
+            # Create a minimal profile that user must complete
+            profile = Profile(
+                id=DEFAULT_PROFILE_ID,
+                first_name="",
+                last_name="",
+                email="user@example.com"  # Placeholder - should be updated
+            )
+            self.session.add(profile)
+            self.session.commit()
+            self.session.refresh(profile)
+
+        return profile
     
     def create_profile(
         self,
@@ -61,7 +107,9 @@ class ProfileService:
     ) -> Profile:
         """
         Create a new profile.
-        
+
+        Desktop app: Only one profile is allowed. If a profile already exists, raises MultipleProfilesError.
+
         Args:
             first_name: User's first name
             last_name: User's last name
@@ -72,32 +120,38 @@ class ProfileService:
             linkedin_url: Optional LinkedIn profile URL
             portfolio_url: Optional portfolio/website URL
             professional_summary: Optional professional summary
-            
+
         Returns:
             Profile: The created profile
-            
+
         Raises:
             ProfileValidationError: If validation fails
             DuplicateEmailError: If email already exists
+            MultipleProfilesError: If a profile already exists (single-profile mode)
         """
+        # Check if profile already exists (single-profile enforcement)
+        existing_profile = self.get_default_profile()
+        if existing_profile is not None:
+            raise MultipleProfilesError(
+                "Only one profile is allowed in desktop mode. "
+                "Please update the existing profile instead."
+            )
+
         # Validate required fields
         self._validate_required_fields(first_name, last_name, email)
-        
+
         # Validate email format
         self._validate_email(email)
-        
-        # Check for duplicate email
-        if self._email_exists(email):
-            raise DuplicateEmailError(f"Profile with email '{email}' already exists")
-        
+
         # Validate URLs if provided
         if linkedin_url:
             self._validate_url(linkedin_url, "LinkedIn URL")
         if portfolio_url:
             self._validate_url(portfolio_url, "Portfolio URL")
-        
-        # Create profile
+
+        # Create profile with explicit id=1
         profile = Profile(
+            id=DEFAULT_PROFILE_ID,
             first_name=first_name.strip(),
             last_name=last_name.strip(),
             email=email.strip().lower(),
@@ -108,7 +162,7 @@ class ProfileService:
             portfolio_url=portfolio_url.strip() if portfolio_url else None,
             professional_summary=professional_summary.strip() if professional_summary else None
         )
-        
+
         try:
             self.session.add(profile)
             self.session.commit()
@@ -258,17 +312,20 @@ class ProfileService:
     def delete_profile(self, profile_id: int) -> None:
         """
         Delete a profile.
-        
+
         This will cascade delete all related data (jobs, skills, etc.)
-        
+
+        Note: In single-profile mode, this is generally not recommended.
+        Consider using update_profile() to clear data instead.
+
         Args:
             profile_id: The profile ID to delete
-            
+
         Raises:
             ProfileNotFoundError: If profile not found
         """
         profile = self.get_profile_by_id(profile_id)
-        
+
         self.session.delete(profile)
         self.session.commit()
     

@@ -1,4 +1,4 @@
-"""Profile management screen."""
+"""Profile management screen - Single profile mode."""
 
 from __future__ import annotations
 
@@ -11,23 +11,21 @@ try:
         QHBoxLayout,
         QLabel,
         QPushButton,
-        QListWidget,
-        QListWidgetItem,
         QFrame,
+        QGridLayout,
     )
-    from PyQt6.QtCore import Qt, pyqtSignal
+    from PyQt6.QtCore import pyqtSignal
 except ImportError as exc:
     raise ImportError("PyQt6 is required to use the GUI components") from exc
 
+from adaptive_resume.models.base import DEFAULT_PROFILE_ID
 from .base_screen import BaseScreen
 
 
 class ProfileManagementScreen(BaseScreen):
-    """Screen for managing user profiles."""
+    """Screen for viewing and managing the user profile (single-profile mode)."""
 
     # Signals
-    select_profile_requested = pyqtSignal(int)  # profile_id
-    add_profile_requested = pyqtSignal()
     edit_profile_requested = pyqtSignal()
     import_resume_requested = pyqtSignal()
 
@@ -37,7 +35,6 @@ class ProfileManagementScreen(BaseScreen):
         parent: Optional[QWidget] = None
     ) -> None:
         self.profile_service = profile_service
-        self.current_profile_id: Optional[int] = None
         super().__init__(parent)
 
     def _setup_ui(self) -> None:
@@ -49,141 +46,152 @@ class ProfileManagementScreen(BaseScreen):
         # Header with action buttons
         header_layout = QHBoxLayout()
 
-        header = QLabel("Profile Management")
+        header = QLabel("Profile")
         header.setObjectName("screenTitle")
         header_layout.addWidget(header)
 
         header_layout.addStretch()
 
         # Import resume button
-        import_resume_btn = QPushButton("📄 Import Resume")
-        import_resume_btn.setToolTip("Import an existing resume to auto-populate profile data")
+        import_resume_btn = QPushButton("📄 Import/Update from Resume")
+        import_resume_btn.setToolTip("Import or update your profile from an existing resume")
         import_resume_btn.clicked.connect(self.import_resume_requested.emit)
         header_layout.addWidget(import_resume_btn)
 
-        # Add profile button
-        add_profile_btn = QPushButton("➕ Add Profile")
-        add_profile_btn.clicked.connect(self.add_profile_requested.emit)
-        header_layout.addWidget(add_profile_btn)
+        # Edit profile button
+        edit_profile_btn = QPushButton("✏️ Edit Profile")
+        edit_profile_btn.setObjectName("primaryButton")
+        edit_profile_btn.clicked.connect(self.edit_profile_requested.emit)
+        header_layout.addWidget(edit_profile_btn)
 
         layout.addLayout(header_layout)
 
-        # Profile list in a nice frame
-        list_frame = QFrame()
-        list_frame.setObjectName("panelFrame")
-        list_layout = QVBoxLayout(list_frame)
-
-        list_title = QLabel("Your Profiles")
-        list_title.setObjectName("panelTitle")
-        list_layout.addWidget(list_title)
-
-        self.profile_list = QListWidget()
-        self.profile_list.itemDoubleClicked.connect(self._on_profile_double_clicked)
-        self.profile_list.currentItemChanged.connect(self._on_profile_selected)
-        # Limit height for typical usage (1-3 profiles)
-        self.profile_list.setMaximumHeight(200)
-        list_layout.addWidget(self.profile_list)
-
-        select_btn = QPushButton("Select Profile")
-        select_btn.setObjectName("primaryButton")
-        select_btn.clicked.connect(self._on_select_clicked)
-        list_layout.addWidget(select_btn)
-
-        layout.addWidget(list_frame)
-
-        # Current profile info
+        # Profile info display
         info_frame = QFrame()
         info_frame.setObjectName("panelFrame")
         info_layout = QVBoxLayout(info_frame)
 
-        info_title = QLabel("Current Profile")
+        info_title = QLabel("Profile Information")
         info_title.setObjectName("panelTitle")
         info_layout.addWidget(info_title)
 
-        self.current_profile_label = QLabel("No profile selected")
-        self.current_profile_label.setWordWrap(True)
-        info_layout.addWidget(self.current_profile_label)
+        # Grid layout for profile details
+        details_layout = QGridLayout()
+        details_layout.setColumnStretch(1, 1)
+        details_layout.setHorizontalSpacing(15)
+        details_layout.setVerticalSpacing(10)
 
-        # Edit profile button in Current Profile section
-        edit_profile_btn = QPushButton("✏️ Edit Profile")
-        edit_profile_btn.clicked.connect(self.edit_profile_requested.emit)
-        info_layout.addWidget(edit_profile_btn)
+        # Create labels for all profile fields
+        self.name_value = QLabel("")
+        self.name_value.setWordWrap(True)
 
+        self.email_value = QLabel("")
+        self.email_value.setWordWrap(True)
+
+        self.phone_value = QLabel("")
+        self.phone_value.setWordWrap(True)
+
+        self.location_value = QLabel("")
+        self.location_value.setWordWrap(True)
+
+        self.linkedin_value = QLabel("")
+        self.linkedin_value.setWordWrap(True)
+        self.linkedin_value.setOpenExternalLinks(True)
+
+        self.portfolio_value = QLabel("")
+        self.portfolio_value.setWordWrap(True)
+        self.portfolio_value.setOpenExternalLinks(True)
+
+        self.summary_value = QLabel("")
+        self.summary_value.setWordWrap(True)
+
+        # Add to grid
+        row = 0
+        details_layout.addWidget(QLabel("<b>Name:</b>"), row, 0)
+        details_layout.addWidget(self.name_value, row, 1)
+
+        row += 1
+        details_layout.addWidget(QLabel("<b>Email:</b>"), row, 0)
+        details_layout.addWidget(self.email_value, row, 1)
+
+        row += 1
+        details_layout.addWidget(QLabel("<b>Phone:</b>"), row, 0)
+        details_layout.addWidget(self.phone_value, row, 1)
+
+        row += 1
+        details_layout.addWidget(QLabel("<b>Location:</b>"), row, 0)
+        details_layout.addWidget(self.location_value, row, 1)
+
+        row += 1
+        details_layout.addWidget(QLabel("<b>LinkedIn:</b>"), row, 0)
+        details_layout.addWidget(self.linkedin_value, row, 1)
+
+        row += 1
+        details_layout.addWidget(QLabel("<b>Portfolio:</b>"), row, 0)
+        details_layout.addWidget(self.portfolio_value, row, 1)
+
+        row += 1
+        details_layout.addWidget(QLabel("<b>Professional Summary:</b>"), row, 0)
+        details_layout.addWidget(self.summary_value, row, 1)
+
+        info_layout.addLayout(details_layout)
         layout.addWidget(info_frame)
 
-    def set_profile(self, profile_id: int) -> None:
-        """Set the current profile."""
-        self.current_profile_id = profile_id
-        self._update_current_profile_display()
+        layout.addStretch()
 
     def on_screen_shown(self) -> None:
         """Refresh data when screen is shown."""
-        self._load_profiles()
-        self._update_current_profile_display()
+        self._load_profile_data()
 
-    def _load_profiles(self) -> None:
-        """Load all profiles into the list."""
+    def _load_profile_data(self) -> None:
+        """Load and display the default profile data."""
         if not self.profile_service:
+            self.name_value.setText("Profile service not available")
             return
 
-        self.profile_list.clear()
-
-        from adaptive_resume.models import Profile
-
-        profiles = (
-            self.profile_service.session.query(Profile)
-            .order_by(Profile.last_name.asc(), Profile.first_name.asc())
-            .all()
-        )
-
-        for profile in profiles:
-            label = f"{profile.first_name} {profile.last_name}"
-            if profile.email:
-                label += f" ({profile.email})"
-
-            item = QListWidgetItem(label)
-            item.setData(Qt.ItemDataRole.UserRole, profile.id)
-            self.profile_list.addItem(item)
-
-            # Select current profile
-            if profile.id == self.current_profile_id:
-                self.profile_list.setCurrentItem(item)
-
-    def _update_current_profile_display(self) -> None:
-        """Update the current profile info display."""
-        if not self.current_profile_id or not self.profile_service:
-            self.current_profile_label.setText("No profile selected")
+        profile = self.profile_service.get_default_profile()
+        if not profile:
+            self.name_value.setText("No profile found")
+            self.email_value.setText("Please create a profile")
+            self.phone_value.setText("-")
+            self.location_value.setText("-")
+            self.linkedin_value.setText("-")
+            self.portfolio_value.setText("-")
+            self.summary_value.setText("-")
             return
 
-        profile = self.profile_service.get_profile_by_id(self.current_profile_id)
-        if profile:
-            info_text = f"<b>{profile.first_name} {profile.last_name}</b><br>"
-            info_text += f"<b>Email:</b> {profile.email}<br>"
-            if profile.phone:
-                info_text += f"<b>Phone:</b> {profile.phone}<br>"
-            if profile.city and profile.state:
-                info_text += f"<b>Location:</b> {profile.city}, {profile.state}<br>"
-            if profile.linkedin_url:
-                info_text += f"<b>LinkedIn:</b> {profile.linkedin_url}<br>"
+        # Update all fields
+        self.name_value.setText(f"{profile.first_name} {profile.last_name}")
+        self.email_value.setText(profile.email or "-")
+        self.phone_value.setText(profile.phone or "-")
 
-            self.current_profile_label.setText(info_text)
+        # Location
+        if profile.city and profile.state:
+            self.location_value.setText(f"{profile.city}, {profile.state}")
+        elif profile.city:
+            self.location_value.setText(profile.city)
+        elif profile.state:
+            self.location_value.setText(profile.state)
+        else:
+            self.location_value.setText("-")
 
-    def _on_profile_selected(self, current: Optional[QListWidgetItem]) -> None:
-        """Handle profile selection in the list."""
-        # Just visual feedback, doesn't change the active profile
-        pass
+        # LinkedIn URL with clickable link
+        if profile.linkedin_url:
+            self.linkedin_value.setText(f'<a href="{profile.linkedin_url}">{profile.linkedin_url}</a>')
+        else:
+            self.linkedin_value.setText("-")
 
-    def _on_profile_double_clicked(self, item: QListWidgetItem) -> None:
-        """Handle double-click on a profile - select it."""
-        profile_id = int(item.data(Qt.ItemDataRole.UserRole))
-        self.select_profile_requested.emit(profile_id)
+        # Portfolio URL with clickable link
+        if profile.portfolio_url:
+            self.portfolio_value.setText(f'<a href="{profile.portfolio_url}">{profile.portfolio_url}</a>')
+        else:
+            self.portfolio_value.setText("-")
 
-    def _on_select_clicked(self) -> None:
-        """Handle Select Profile button click."""
-        current_item = self.profile_list.currentItem()
-        if current_item:
-            profile_id = int(current_item.data(Qt.ItemDataRole.UserRole))
-            self.select_profile_requested.emit(profile_id)
+        # Professional summary
+        if profile.professional_summary:
+            self.summary_value.setText(profile.professional_summary)
+        else:
+            self.summary_value.setText("-")
 
 
 __all__ = ["ProfileManagementScreen"]

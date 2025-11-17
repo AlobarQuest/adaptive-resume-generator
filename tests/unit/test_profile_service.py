@@ -130,23 +130,24 @@ class TestProfileServiceCreate:
                 email="notanemail"
             )
     
-    def test_create_profile_duplicate_email(self, session):
-        """Test that duplicate emails are prevented."""
+    def test_create_profile_prevents_multiple_profiles(self, session):
+        """Test that only one profile is allowed (single-profile mode)."""
+        from adaptive_resume.services.profile_service import MultipleProfilesError
         service = ProfileService(session)
-        
+
         # Create first profile
         service.create_profile(
             first_name="John",
             last_name="Doe",
             email="john@example.com"
         )
-        
-        # Try to create second profile with same email
-        with pytest.raises(DuplicateEmailError, match="already exists"):
+
+        # Try to create second profile - should fail regardless of email
+        with pytest.raises(MultipleProfilesError, match="Only one profile is allowed"):
             service.create_profile(
                 first_name="Jane",
                 last_name="Smith",
-                email="john@example.com"
+                email="different@example.com"  # Even different email should fail
             )
     
     def test_create_profile_invalid_linkedin_url(self, session):
@@ -198,22 +199,31 @@ class TestProfileServiceRead:
         
         assert profile is None
     
-    def test_get_all_profiles(self, session):
-        """Test retrieving all profiles."""
+    def test_get_default_profile_and_ensure_exists(self, session):
+        """Test retrieving default profile and ensure_profile_exists (single-profile mode)."""
         service = ProfileService(session)
-        
-        # Create multiple profiles
-        service.create_profile("Alice", "Anderson", "alice@example.com")
-        service.create_profile("Bob", "Brown", "bob@example.com")
-        service.create_profile("Charlie", "Chen", "charlie@example.com")
-        
-        profiles = service.get_all_profiles()
-        
-        assert len(profiles) == 3
-        # Should be sorted by last name, then first name
-        assert profiles[0].last_name == "Anderson"
-        assert profiles[1].last_name == "Brown"
-        assert profiles[2].last_name == "Chen"
+
+        # At first, no profile should exist
+        profile = service.get_default_profile()
+        assert profile is None
+
+        # ensure_profile_exists should create a profile if none exists
+        profile = service.ensure_profile_exists()
+        assert profile is not None
+        assert profile.id == 1
+
+        # Calling again should return the same profile
+        profile2 = service.ensure_profile_exists()
+        assert profile2.id == profile.id
+
+        # get_default_profile should now return the profile
+        profile3 = service.get_default_profile()
+        assert profile3.id == 1
+
+        # Attempting to create a second profile should fail
+        from adaptive_resume.services.profile_service import MultipleProfilesError
+        with pytest.raises(MultipleProfilesError):
+            service.create_profile("Second", "Profile", "second@example.com")
     
     def test_profile_exists(self, session, sample_profile):
         """Test checking if profile exists."""
@@ -264,20 +274,10 @@ class TestProfileServiceUpdate:
         
         assert updated.email == "newemail@example.com"
     
+    @pytest.mark.skip(reason="Single-profile mode: duplicate email checking not applicable with only one profile")
     def test_update_profile_email_duplicate(self, session):
-        """Test that duplicate email is prevented on update."""
-        service = ProfileService(session)
-        
-        # Create two profiles
-        profile1 = service.create_profile("John", "Doe", "john@example.com")
-        profile2 = service.create_profile("Jane", "Smith", "jane@example.com")
-        
-        # Try to update profile2 email to profile1's email
-        with pytest.raises(DuplicateEmailError):
-            service.update_profile(
-                profile_id=profile2.id,
-                email="john@example.com"
-            )
+        """Test that duplicate email is prevented on update (obsolete in single-profile mode)."""
+        pass
     
     def test_update_profile_not_found(self, session):
         """Test updating non-existent profile."""

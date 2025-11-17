@@ -19,6 +19,7 @@ except ImportError as exc:
     raise ImportError("PyQt6 is required to use the GUI components") from exc
 
 from .base_screen import BaseScreen
+from adaptive_resume.models.base import DEFAULT_PROFILE_ID
 
 
 class DashboardScreen(BaseScreen):
@@ -42,7 +43,6 @@ class DashboardScreen(BaseScreen):
         self.job_service = job_service
         self.skill_service = skill_service
         self.education_service = education_service
-        self.current_profile_id: Optional[int] = None
         super().__init__(parent)
 
     def _setup_ui(self) -> None:
@@ -188,17 +188,9 @@ class DashboardScreen(BaseScreen):
 
         return card
 
-    def set_profile(self, profile_id: int) -> None:
-        """Set the current profile and update stats."""
-        self.current_profile_id = profile_id
-        self._update_button_state()
-        self._update_stats()
-        self._update_profile_info()
-        self._update_recent_jobs()
-
     def _handle_primary_action(self) -> None:
         """Handle the primary action button click."""
-        if self.current_profile_id:
+        if self.profile_service and self.profile_service.get_profile_by_id(DEFAULT_PROFILE_ID):
             # Profile exists, navigate to upload
             self.navigate_to_upload.emit()
         else:
@@ -207,18 +199,18 @@ class DashboardScreen(BaseScreen):
 
     def _update_button_state(self) -> None:
         """Update the primary button text based on profile existence."""
-        if self.current_profile_id:
+        if self.profile_service and self.profile_service.get_profile_by_id(DEFAULT_PROFILE_ID):
             self.upload_btn.setText("📄 Upload Job Posting")
         else:
             self.upload_btn.setText("➕ Create Applicant Profile")
 
     def _update_stats(self) -> None:
         """Update the statistics display."""
-        if not self.current_profile_id or not self.job_service:
+        if not self.job_service:
             return
 
         # Get counts from services
-        jobs = self.job_service.get_jobs_for_profile(self.current_profile_id)
+        jobs = self.job_service.get_jobs_for_profile(DEFAULT_PROFILE_ID)
 
         # Count unique companies
         companies = set(job.company_name for job in jobs)
@@ -236,21 +228,21 @@ class DashboardScreen(BaseScreen):
 
         # Get skills count if service available
         if self.skill_service:
-            skills = self.skill_service.list_skills_for_profile(self.current_profile_id)
+            skills = self.skill_service.list_skills_for_profile(DEFAULT_PROFILE_ID)
             self.stat_widgets["skills"].value_label.setText(str(len(skills)))
 
         # Get education count if service available
         if self.education_service:
-            education = self.education_service.list_education_for_profile(self.current_profile_id)
+            education = self.education_service.list_education_for_profile(DEFAULT_PROFILE_ID)
             self.stat_widgets["education"].value_label.setText(str(len(education)))
 
     def _update_profile_info(self) -> None:
         """Update the profile info panel."""
-        if not self.current_profile_id or not self.profile_service:
+        if not self.profile_service:
             self.current_profile_label.setText("No profile selected")
             return
 
-        profile = self.profile_service.get_profile_by_id(self.current_profile_id)
+        profile = self.profile_service.get_profile_by_id(DEFAULT_PROFILE_ID)
         if profile:
             # Update hero section current profile label
             profile_name = f"{profile.first_name} {profile.last_name}"
@@ -268,10 +260,10 @@ class DashboardScreen(BaseScreen):
 
     def _update_recent_jobs(self) -> None:
         """Update the recent jobs display."""
-        if not self.current_profile_id or not self.job_service:
+        if not self.job_service:
             return
 
-        jobs = self.job_service.get_jobs_for_profile(self.current_profile_id)
+        jobs = self.job_service.get_jobs_for_profile(DEFAULT_PROFILE_ID)
 
         if not jobs:
             self.recent_jobs_label.setText("No jobs added yet. Add your first job!")
@@ -288,10 +280,10 @@ class DashboardScreen(BaseScreen):
 
     def on_screen_shown(self) -> None:
         """Refresh data when screen is shown."""
-        if self.current_profile_id:
-            self._update_stats()
-            self._update_profile_info()
-            self._update_recent_jobs()
+        self._update_button_state()
+        self._update_stats()
+        self._update_profile_info()
+        self._update_recent_jobs()
 
 
 __all__ = ["DashboardScreen"]

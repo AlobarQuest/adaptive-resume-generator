@@ -78,20 +78,33 @@ alembic downgrade -1
 
 ## Architecture Overview
 
+### Single-Profile Design (Desktop App)
+**IMPORTANT**: The desktop application enforces a **single-profile architecture**. Only one profile (id=1) is allowed per database. Multi-user support will be handled in the future web version where each user account will have exactly one profile.
+
+**Key Constant**: `DEFAULT_PROFILE_ID = 1` (defined in `src/adaptive_resume/models/base.py`)
+
+**Service Behavior**:
+- All child services (JobService, SkillService, EducationService, CertificationService) have `profile_id` as an optional parameter with `DEFAULT_PROFILE_ID` as the default
+- ProfileService provides `get_default_profile()` and `ensure_profile_exists()` for single-profile access
+- Attempting to create a second profile raises `MultipleProfilesError`
+
+**Database Migration**: Alembic migration `1912d441f4d7_enforce_single_profile_design.py` consolidates existing multi-profile databases to single-profile
+
 ### Layered Architecture
 The application follows a strict layered architecture:
 
 1. **Presentation Layer** (`src/adaptive_resume/gui/`): PyQt6 UI components
-   - `main_window.py`: Central application window with profile/job management
+   - `main_window.py`: Central application window - ensures profile exists on startup
    - `dialogs/`: Modal dialogs for data entry (ProfileDialog, JobDialog, BulletEnhancementDialog, SettingsDialog)
    - `views/`: Reusable view components (JobsView, SkillsSummaryView, ApplicationsView)
    - `widgets/`: Custom widgets (SkillsPanel, EducationPanel)
-   - `screens/`: Full-screen UI components
+   - `screens/`: Full-screen UI components (no longer require `set_profile()` method)
    - `database_manager.py`: Singleton session manager for GUI
 
 2. **Service Layer** (`src/adaptive_resume/services/`): Business logic orchestration
    - Services handle all business operations and coordinate between UI and data layers
    - Each domain entity has a corresponding service (ProfileService, JobService, SkillService, etc.)
+   - **Single-profile mode**: Services default to `DEFAULT_PROFILE_ID` when `profile_id` not specified
    - `ai_enhancement_service.py`: Claude API integration for bullet enhancement
    - `bullet_enhancer.py`: Rule-based bullet point enhancement
    - **Job Posting Analysis Pipeline** (Phase 4):
@@ -131,12 +144,20 @@ The application follows a strict layered architecture:
 - Database location: `~/.adaptive_resume/resume_data.db` (configurable via `ADAPTIVE_RESUME_DB_PATH` env var)
 
 ### Key Architectural Patterns
+- **Single-Profile Design**: Desktop app enforces one profile per database (id=1)
 - **Dependency Injection**: Services receive session objects, making them testable
 - **Service-Oriented**: All business logic lives in services, not in models or UI
 - **Repository Pattern**: Services interact with models through SQLAlchemy sessions
 - **Separation of Concerns**: UI code never directly touches models; always goes through services
 
 ## Important Implementation Details
+
+### Single-Profile Architecture
+- **Desktop app**: One profile (id=1) per database - enforced by `ProfileService.create_profile()`
+- **Web app (future)**: One profile per user account - enforced by authentication layer
+- **Profile access**: Use `ProfileService.get_default_profile()` or `ensure_profile_exists()`
+- **Service defaults**: All child services default to `DEFAULT_PROFILE_ID` when `profile_id` not specified
+- **Migration**: Existing multi-profile databases are consolidated on upgrade
 
 ### AI Enhancement Integration
 - AI enhancement is **optional** and requires an Anthropic API key
@@ -146,7 +167,7 @@ The application follows a strict layered architecture:
 - Current model: `claude-sonnet-4-20250514`
 
 ### Profile and Job Management
-- Each Profile can have multiple Jobs, Skills, Education entries, and Certifications
+- The single Profile can have multiple Jobs, Skills, Education entries, and Certifications
 - Jobs contain BulletPoints for achievement tracking
 - BulletPoints can be enhanced using AI or rule-based methods
 - The `display_order` field controls presentation order in the UI
@@ -267,18 +288,26 @@ alembic/              # Database migrations
 ### When Adding New Models
 1. Create model in `src/adaptive_resume/models/`
 2. Import in `models/__init__.py`
-3. Create corresponding service in `src/adaptive_resume/services/`
-4. Generate migration: `alembic revision --autogenerate -m "Add ModelName"`
-5. Apply migration: `alembic upgrade head`
-6. Add tests in `tests/unit/`
+3. If the model should belong to a profile, add `profile_id` foreign key:
+   ```python
+   profile_id = Column(Integer, ForeignKey('profiles.id', ondelete='CASCADE'),
+                       nullable=False, index=True, default=DEFAULT_PROFILE_ID)
+   ```
+4. Create corresponding service in `src/adaptive_resume/services/`
+5. Service methods should have `profile_id` as optional parameter with `DEFAULT_PROFILE_ID` default
+6. Generate migration: `alembic revision --autogenerate -m "Add ModelName"`
+7. Apply migration: `alembic upgrade head`
+8. Add tests in `tests/unit/`
 
 ### When Adding New GUI Features
 1. **Review the UI design docs first**: Check `docs/design/ui_complete_specification.md` for the planned UI architecture
 2. Create dialog/view/widget in appropriate `gui/` subdirectory
 3. Connect to existing services (never create new database logic in GUI)
-4. Use signals/slots for event handling
-5. Import and wire up in `main_window.py` if needed
-6. Follow existing patterns for layout and styling
+4. **Do not pass `profile_id` to services** - they default to `DEFAULT_PROFILE_ID`
+5. **Do not implement `set_profile()` methods** - single-profile mode doesn't need them
+6. Use signals/slots for event handling
+7. Import and wire up in `main_window.py` if needed
+8. Follow existing patterns for layout and styling
 
 ### UI/UX Implementation Notes
 - **Current UI State**: Traditional desktop layout with profile sidebar (being redesigned)
@@ -298,6 +327,12 @@ alembic/              # Database migrations
 - Always handle exceptions and provide meaningful error messages
 - Use transactions appropriately (commit/rollback)
 - Services coordinate workflows but don't contain UI logic
+- **Single-profile mode**: Make `profile_id` an optional parameter with `DEFAULT_PROFILE_ID` default
+- **Example service method signature**:
+  ```python
+  def create_item(self, name: str, ..., profile_id: int = DEFAULT_PROFILE_ID) -> Item:
+      # Implementation
+  ```
 
 ### Code Style
 - Follow PEP 8 conventions
@@ -312,6 +347,9 @@ alembic/              # Database migrations
 3. **Don't access database directly from UI**: Always use services as intermediaries
 4. **Don't forget to commit**: Services need explicit `session.commit()` calls
 5. **Don't skip migrations**: Always use Alembic for schema changes
+6. **Don't try to create multiple profiles**: Desktop app enforces single-profile mode
+7. **Don't pass `profile_id` in GUI code**: Services default to `DEFAULT_PROFILE_ID`
+8. **Don't implement profile switching**: Removed in single-profile architecture
 
 ## Future Architecture Notes
 

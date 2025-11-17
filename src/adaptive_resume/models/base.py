@@ -10,6 +10,10 @@ from sqlalchemy.orm import declarative_base, sessionmaker, scoped_session
 from pathlib import Path
 import os
 
+# Single-profile architecture constant
+# Desktop app enforces one profile per database
+DEFAULT_PROFILE_ID = 1
+
 # Get database path from environment or use default
 DATABASE_PATH = os.getenv(
     'ADAPTIVE_RESUME_DB_PATH',

@@ -22,12 +22,12 @@ def test_create_list_and_update_certification(session):
 
     service = CertificationService(session)
     certification = service.create_certification(
-        profile_id=profile.id,
         name="AWS Solutions Architect",
         issuing_organization="Amazon",
         issue_date=date(2022, 1, 1),
         expiration_date=date(2025, 1, 1),
         credential_id="AWS-123",
+        profile_id=profile.id,
     )
 
     assert certification.id is not None
@@ -39,7 +39,7 @@ def test_create_list_and_update_certification(session):
     updated = service.update_certification(certification.id, credential_url="https://aws.amazon.com")
     assert updated.credential_url == "https://aws.amazon.com"
 
-    service.reorder_certifications(profile.id, [certification.id])
+    service.reorder_certifications([certification.id], profile_id=profile.id)
 
     service.delete_certification(certification.id)
     with pytest.raises(CertificationNotFoundError):
@@ -57,13 +57,13 @@ def test_create_certification_validates_input(session):
     service = CertificationService(session)
 
     with pytest.raises(CertificationValidationError):
-        service.create_certification(profile.id, name="", issuing_organization="AWS")
+        service.create_certification(name="", issuing_organization="AWS", profile_id=profile.id)
 
     with pytest.raises(CertificationValidationError):
         service.create_certification(
-            profile.id,
             name="Azure Architect",
             issuing_organization="Microsoft",
             issue_date=date(2021, 5, 1),
             expiration_date=date(2020, 5, 1),
+            profile_id=profile.id,
         )

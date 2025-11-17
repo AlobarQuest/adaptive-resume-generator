@@ -20,11 +20,11 @@ def test_create_list_and_update_skill(session):
 
     service = SkillService(session)
     skill = service.create_skill(
-        profile_id=profile.id,
         skill_name="Python",
         category="Programming Languages",
         proficiency_level="Expert",
         years_experience=7.5,
+        profile_id=profile.id,
     )
 
     assert skill.id is not None
@@ -37,7 +37,7 @@ def test_create_list_and_update_skill(session):
     assert updated.proficiency_level == "Advanced"
     assert float(updated.years_experience) == 8.0
 
-    service.reorder_skills(profile.id, [skill.id])
+    service.reorder_skills([skill.id], profile_id=profile.id)
 
     service.delete_skill(skill.id)
     with pytest.raises(SkillNotFoundError):
@@ -55,10 +55,10 @@ def test_create_skill_validates_input(session):
     service = SkillService(session)
 
     with pytest.raises(SkillValidationError):
-        service.create_skill(profile.id, skill_name="", proficiency_level="Expert")
+        service.create_skill(skill_name="", proficiency_level="Expert", profile_id=profile.id)
 
     with pytest.raises(SkillValidationError):
-        service.create_skill(profile.id, skill_name="Leadership", proficiency_level="Master")
+        service.create_skill(skill_name="Leadership", proficiency_level="Master", profile_id=profile.id)
 
     with pytest.raises(SkillValidationError):
-        service.create_skill(profile.id, skill_name="Leadership", years_experience=-1)
+        service.create_skill(skill_name="Leadership", years_experience=-1, profile_id=profile.id)

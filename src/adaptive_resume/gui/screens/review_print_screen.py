@@ -28,7 +28,6 @@ class ReviewPrintScreen(BaseScreen):
         self,
         parent: Optional[QWidget] = None
     ) -> None:
-        self.current_profile_id: Optional[int] = None
         super().__init__(parent)
 
     def _setup_ui(self) -> None:
@@ -133,10 +132,6 @@ class ReviewPrintScreen(BaseScreen):
 
         # Add scroll area to main layout
         main_layout.addWidget(scroll)
-
-    def set_profile(self, profile_id: int) -> None:
-        """Set the current profile."""
-        self.current_profile_id = profile_id
 
 
 __all__ = ["ReviewPrintScreen"]

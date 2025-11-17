@@ -165,7 +165,6 @@ class JobPostingScreen(BaseScreen):
     ) -> None:
         self.profile_service = profile_service
         self.job_service = job_service
-        self.current_profile_id: Optional[int] = None
         self.uploaded_file_path: Optional[str] = None
         self.job_posting_text: Optional[str] = None
         self.job_title: str = ""
@@ -499,11 +498,6 @@ class JobPostingScreen(BaseScreen):
             file_path = urls[0].toLocalFile()
             self._load_file(file_path)
 
-    def set_profile(self, profile_id: int) -> None:
-        """Set the current profile."""
-        self.current_profile_id = profile_id
-        self._update_profile_combo()
-
     def _update_profile_combo(self) -> None:
         """Update the profile dropdown with all available profiles."""
         if not self.profile_service:
@@ -527,12 +521,9 @@ class JobPostingScreen(BaseScreen):
             display_name = f"{profile.first_name} {profile.last_name}"
             self.profile_combo.addItem(display_name, profile.id)
 
-        # Select current profile if set
-        if self.current_profile_id:
-            for i in range(self.profile_combo.count()):
-                if self.profile_combo.itemData(i) == self.current_profile_id:
-                    self.profile_combo.setCurrentIndex(i)
-                    break
+        # Select first profile by default
+        if self.profile_combo.count() > 0:
+            self.profile_combo.setCurrentIndex(0)
 
     def on_screen_shown(self) -> None:
         """Refresh data when screen is shown."""

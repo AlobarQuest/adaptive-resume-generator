@@ -8,6 +8,7 @@ from typing import Iterable, List, Optional
 from sqlalchemy.orm import Session
 
 from adaptive_resume.models import Certification, Profile
+from adaptive_resume.models.base import DEFAULT_PROFILE_ID
 
 
 class CertificationServiceError(Exception):
@@ -30,7 +31,6 @@ class CertificationService:
 
     def create_certification(
         self,
-        profile_id: int,
         name: str,
         issuing_organization: str,
         issue_date: Optional[date] = None,
@@ -38,6 +38,7 @@ class CertificationService:
         credential_id: Optional[str] = None,
         credential_url: Optional[str] = None,
         display_order: Optional[int] = None,
+        profile_id: int = DEFAULT_PROFILE_ID,
     ) -> Certification:
         self._ensure_profile_exists(profile_id)
         self._validate_required(name, issuing_organization)
@@ -117,7 +118,7 @@ class CertificationService:
             raise CertificationNotFoundError(f"Certification with id {certification_id} not found")
         return certification
 
-    def list_certifications_for_profile(self, profile_id: int) -> List[Certification]:
+    def list_certifications_for_profile(self, profile_id: int = DEFAULT_PROFILE_ID) -> List[Certification]:
         return (
             self.session.query(Certification)
             .filter_by(profile_id=profile_id)
@@ -125,7 +126,7 @@ class CertificationService:
             .all()
         )
 
-    def reorder_certifications(self, profile_id: int, ordered_ids: Iterable[int]) -> None:
+    def reorder_certifications(self, ordered_ids: Iterable[int], profile_id: int = DEFAULT_PROFILE_ID) -> None:
         certifications = self.list_certifications_for_profile(profile_id)
         id_map = {cert.id: cert for cert in certifications}
         for position, certification_id in enumerate(ordered_ids):

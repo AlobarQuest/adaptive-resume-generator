@@ -14,10 +14,10 @@ from adaptive_resume.models.base import Base
 class Profile(Base):
     """
     User profile containing core professional information.
-    
-    In v1.0, there is typically one profile per database.
-    Future versions may support multiple profiles for different
-    career focuses or user accounts.
+
+    The desktop application enforces a single-profile design (id=1).
+    Multi-user support will be handled in the web version where each
+    user account will have exactly one profile.
     """
     
     __tablename__ = 'profiles'

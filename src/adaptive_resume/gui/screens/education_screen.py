@@ -18,6 +18,7 @@ except ImportError as exc:
 
 from .base_screen import BaseScreen
 from ..widgets import EducationPanel
+from adaptive_resume.models.base import DEFAULT_PROFILE_ID
 
 
 class EducationScreen(BaseScreen):
@@ -34,7 +35,6 @@ class EducationScreen(BaseScreen):
         parent: Optional[QWidget] = None
     ) -> None:
         self.education_service = education_service
-        self.current_profile_id: Optional[int] = None
         super().__init__(parent)
 
     def _setup_ui(self) -> None:
@@ -73,22 +73,13 @@ class EducationScreen(BaseScreen):
         self.education_panel = EducationPanel(self.education_service)
         layout.addWidget(self.education_panel)
 
-    def set_profile(self, profile_id: int) -> None:
-        """Set the current profile and load data."""
-        self.current_profile_id = profile_id
-        self._load_data()
-
     def _load_data(self) -> None:
         """Load education for the current profile."""
-        if not self.current_profile_id:
-            return
-
-        self.education_panel.load_education(self.current_profile_id)
+        self.education_panel.load_education(DEFAULT_PROFILE_ID)
 
     def on_screen_shown(self) -> None:
         """Refresh data when screen is shown."""
-        if self.current_profile_id:
-            self._load_data()
+        self._load_data()
 
     def get_selected_education_id(self) -> Optional[int]:
         """Get the ID of the currently selected education entry."""

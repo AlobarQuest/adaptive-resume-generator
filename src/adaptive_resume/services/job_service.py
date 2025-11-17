@@ -10,6 +10,7 @@ from datetime import date, datetime
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from adaptive_resume.models import Job, BulletPoint, Tag, BulletTag, Profile
+from adaptive_resume.models.base import DEFAULT_PROFILE_ID
 
 
 class JobServiceError(Exception):
@@ -57,7 +58,6 @@ class JobService:
     
     def create_job(
         self,
-        profile_id: int,
         company_name: str,
         job_title: str,
         start_date: date,
@@ -65,13 +65,13 @@ class JobService:
         end_date: Optional[date] = None,
         is_current: bool = False,
         description: Optional[str] = None,
-        display_order: int = 0
+        display_order: int = 0,
+        profile_id: int = DEFAULT_PROFILE_ID
     ) -> Job:
         """
         Create a new job.
-        
+
         Args:
-            profile_id: ID of the profile this job belongs to
             company_name: Company name
             job_title: Job title
             start_date: Employment start date
@@ -80,10 +80,11 @@ class JobService:
             is_current: Whether this is a current position
             description: Optional job description
             display_order: Display order (default 0)
-            
+            profile_id: ID of the profile this job belongs to (default: DEFAULT_PROFILE_ID)
+
         Returns:
             Job: The created job
-            
+
         Raises:
             JobValidationError: If validation fails
         """
@@ -141,12 +142,12 @@ class JobService:
 
         return job
     
-    def get_jobs_for_profile(self, profile_id: int, include_deleted: bool = False) -> List[Job]:
+    def get_jobs_for_profile(self, profile_id: int = DEFAULT_PROFILE_ID, include_deleted: bool = False) -> List[Job]:
         """
         Get all jobs for a profile.
 
         Args:
-            profile_id: The profile ID
+            profile_id: The profile ID (default: DEFAULT_PROFILE_ID)
             include_deleted: If True, include soft-deleted jobs
 
         Returns:
@@ -437,12 +438,12 @@ class JobService:
 
     # ==================== Soft Delete Management ====================
 
-    def get_recently_deleted_jobs(self, profile_id: int, days: int = 30) -> List[Job]:
+    def get_recently_deleted_jobs(self, profile_id: int = DEFAULT_PROFILE_ID, days: int = 30) -> List[Job]:
         """
         Get jobs that were soft-deleted within the specified number of days.
 
         Args:
-            profile_id: The profile ID
+            profile_id: The profile ID (default: DEFAULT_PROFILE_ID)
             days: Number of days to look back (default 30)
 
         Returns:
@@ -458,12 +459,12 @@ class JobService:
             Job.deleted_at >= cutoff_date
         ).order_by(Job.deleted_at.desc()).all()
 
-    def get_recently_deleted_bullets(self, profile_id: int, days: int = 30) -> List[BulletPoint]:
+    def get_recently_deleted_bullets(self, profile_id: int = DEFAULT_PROFILE_ID, days: int = 30) -> List[BulletPoint]:
         """
         Get bullet points that were soft-deleted within the specified number of days.
 
         Args:
-            profile_id: The profile ID
+            profile_id: The profile ID (default: DEFAULT_PROFILE_ID)
             days: Number of days to look back (default 30)
 
         Returns:
@@ -579,12 +580,12 @@ class JobService:
         self.session.delete(bullet)
         self.session.commit()
 
-    def purge_old_deleted_items(self, profile_id: int, days: int = 30) -> Tuple[int, int]:
+    def purge_old_deleted_items(self, profile_id: int = DEFAULT_PROFILE_ID, days: int = 30) -> Tuple[int, int]:
         """
         Permanently delete all soft-deleted items older than the specified number of days.
 
         Args:
-            profile_id: The profile ID
+            profile_id: The profile ID (default: DEFAULT_PROFILE_ID)
             days: Number of days (items deleted more than this long ago will be purged)
 
         Returns:

@@ -8,6 +8,7 @@ from typing import Iterable, List, Optional
 from sqlalchemy.orm import Session
 
 from adaptive_resume.models import Education, Profile
+from adaptive_resume.models.base import DEFAULT_PROFILE_ID
 
 
 class EducationServiceError(Exception):
@@ -30,7 +31,6 @@ class EducationService:
 
     def create_education(
         self,
-        profile_id: int,
         institution: str,
         degree: str,
         field_of_study: Optional[str] = None,
@@ -40,6 +40,7 @@ class EducationService:
         honors: Optional[str] = None,
         relevant_coursework: Optional[str] = None,
         display_order: Optional[int] = None,
+        profile_id: int = DEFAULT_PROFILE_ID,
     ) -> Education:
         self._ensure_profile_exists(profile_id)
         self._validate_dates(start_date, end_date)
@@ -133,7 +134,7 @@ class EducationService:
             raise EducationNotFoundError(f"Education with id {education_id} not found")
         return education
 
-    def list_education_for_profile(self, profile_id: int) -> List[Education]:
+    def list_education_for_profile(self, profile_id: int = DEFAULT_PROFILE_ID) -> List[Education]:
         return (
             self.session.query(Education)
             .filter_by(profile_id=profile_id)
@@ -141,7 +142,7 @@ class EducationService:
             .all()
         )
 
-    def reorder_education(self, profile_id: int, ordered_ids: Iterable[int]) -> None:
+    def reorder_education(self, ordered_ids: Iterable[int], profile_id: int = DEFAULT_PROFILE_ID) -> None:
         education_entries = self.list_education_for_profile(profile_id)
         id_map = {entry.id: entry for entry in education_entries}
         for position, education_id in enumerate(ordered_ids):
