@@ -40,7 +40,6 @@ class JobPostingDetailDialog(QDialog):
     def __init__(self, job_posting: JobPosting, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.job_posting = job_posting
-        self.session = DatabaseManager.get_session()
 
         self.setWindowTitle(f"Job Posting: {job_posting.job_title or 'Untitled'}")
         self.setMinimumWidth(700)
@@ -118,6 +117,8 @@ class JobPostingDetailDialog(QDialog):
     def _on_save(self):
         """Save changes to the job posting."""
         try:
+            session = DatabaseManager.get_session()
+
             self.job_posting.company_name = self.company_edit.text().strip() or None
             self.job_posting.job_title = self.title_edit.text().strip() or None
             self.job_posting.location = self.location_edit.text().strip() or None
@@ -125,13 +126,13 @@ class JobPostingDetailDialog(QDialog):
             self.job_posting.application_url = self.url_edit.text().strip() or None
             self.job_posting.notes = self.notes_edit.toPlainText().strip() or None
 
-            self.session.commit()
+            session.commit()
             self.accept()
 
         except Exception as e:
             logger.error(f"Error saving job posting: {e}", exc_info=True)
             QMessageBox.critical(self, "Error", f"Failed to save changes:\n{str(e)}")
-            self.session.rollback()
+            session.rollback()
 
 
 class ManageJobPostingsScreen(BaseScreen):
@@ -139,7 +140,7 @@ class ManageJobPostingsScreen(BaseScreen):
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
-        self.session = DatabaseManager.get_session()
+        self.all_postings = []
         self._setup_ui()
 
     def _setup_ui(self):
@@ -214,10 +215,15 @@ class ManageJobPostingsScreen(BaseScreen):
     def _load_job_postings(self):
         """Load all job postings from database."""
         try:
+            # Get a fresh session each time
+            session = DatabaseManager.get_session()
+
             # Query all job postings for current profile, ordered by date (newest first)
-            self.all_postings = self.session.query(JobPosting).filter_by(
+            self.all_postings = session.query(JobPosting).filter_by(
                 profile_id=1  # DEFAULT_PROFILE_ID
             ).order_by(JobPosting.uploaded_at.desc()).all()
+
+            logger.info(f"Loaded {len(self.all_postings)} job postings from database")
 
             self._display_postings(self.all_postings)
             self.summary_label.setText(f"Total job postings: {len(self.all_postings)}")
@@ -325,15 +331,16 @@ class ManageJobPostingsScreen(BaseScreen):
 
         if reply == QMessageBox.StandardButton.Yes:
             try:
-                self.session.delete(posting)
-                self.session.commit()
+                session = DatabaseManager.get_session()
+                session.delete(posting)
+                session.commit()
                 self._load_job_postings()  # Refresh
                 QMessageBox.information(self, "Success", "Job posting deleted successfully.")
 
             except Exception as e:
                 logger.error(f"Error deleting job posting: {e}", exc_info=True)
                 QMessageBox.critical(self, "Error", f"Failed to delete job posting:\n{str(e)}")
-                self.session.rollback()
+                session.rollback()
 
 
 __all__ = ["ManageJobPostingsScreen"]
