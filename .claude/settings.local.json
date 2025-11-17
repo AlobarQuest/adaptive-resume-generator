@@ -16,7 +16,9 @@
       "Bash(alembic current:*)",
       "Bash(git fetch:*)",
       "Bash(git branch:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(git pull:*)",
+      "Bash(alembic stamp:*)"
     ],
     "deny": [],
     "ask": []

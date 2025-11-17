@@ -30,6 +30,11 @@ class JobPosting(Base):
     # Job details
     company_name = Column(String(200), nullable=True)
     job_title = Column(String(200), nullable=True)
+    location = Column(String(200), nullable=True)  # Job location (e.g., "Remote", "New York, NY")
+    salary_range = Column(String(200), nullable=True)  # Salary/pay rate (e.g., "$80k-$100k", "$50/hr")
+    application_url = Column(String(500), nullable=True)  # URL to submit application
+    source = Column(String(50), nullable=True)  # How it was added: 'paste', 'upload', 'import'
+    notes = Column(Text, nullable=True)  # User notes about the posting
 
     # Raw text
     raw_text = Column(Text, nullable=False)  # Original uploaded text

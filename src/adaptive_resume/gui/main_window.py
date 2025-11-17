@@ -62,6 +62,7 @@ from .screens import (
     ReviewPrintScreen,
     TailoringResultsScreen,
     ApplicationsScreen,
+    ManageJobPostingsScreen,
 )
 
 
@@ -170,6 +171,8 @@ class MainWindow(QMainWindow):
         self.applications_screen = ApplicationsScreen()
         self.applications_screen.application_selected.connect(self._on_application_selected)
 
+        self.manage_postings_screen = ManageJobPostingsScreen()
+
         # Add screens to stacked widget
         self.screens = {
             "dashboard": self.dashboard_screen,
@@ -179,6 +182,7 @@ class MainWindow(QMainWindow):
             "education": self.education_screen,
             "skills": self.skills_screen,
             "upload": self.upload_screen,
+            "manage_postings": self.manage_postings_screen,
             "applications": self.applications_screen,
             "results": self.results_screen,
             "review": self.review_screen,
