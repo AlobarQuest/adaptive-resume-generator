@@ -28,6 +28,26 @@ from adaptive_resume.pdf.templates import (
     CompactTemplate,
     ATSFriendlyTemplate,
 )
+from adaptive_resume.pdf.template_registry import TemplateRegistry
+
+
+@pytest.fixture(autouse=True)
+def ensure_templates_registered():
+    """Ensure all templates are registered before each test.
+
+    This fixture addresses test isolation issues when pytest-randomly
+    runs unit tests that clear the registry before E2E tests execute.
+    """
+    # Check if templates are registered, if not re-register them
+    if not TemplateRegistry.is_registered("classic"):
+        TemplateRegistry.register("classic", ClassicTemplate)
+    if not TemplateRegistry.is_registered("modern"):
+        TemplateRegistry.register("modern", ModernTemplate)
+    if not TemplateRegistry.is_registered("compact"):
+        TemplateRegistry.register("compact", CompactTemplate)
+    if not TemplateRegistry.is_registered("ats-friendly"):
+        TemplateRegistry.register("ats-friendly", ATSFriendlyTemplate)
+    yield
 
 
 @pytest.fixture

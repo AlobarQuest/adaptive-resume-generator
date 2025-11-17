@@ -226,24 +226,29 @@ class TagService:
     def delete_tag(self, tag_id: int, force: bool = False) -> None:
         """
         Delete a tag.
-        
+
         Args:
             tag_id: Tag ID
             force: If True, delete even if tag is in use
-            
+
         Raises:
             TagNotFoundError: If tag not found
             TagServiceError: If tag is in use and force=False
         """
         tag = self.get_tag_by_id(tag_id)
-        
+
         # Check if tag is in use
         if tag.usage_count > 0 and not force:
             raise TagServiceError(
                 f"Tag '{tag.name}' is used by {tag.usage_count} bullet point(s). "
                 "Use force=True to delete anyway."
             )
-        
+
+        # If force=True and tag is in use, delete associations first
+        if force and tag.usage_count > 0:
+            # Delete all BulletTag associations
+            self.session.query(BulletTag).filter_by(tag_id=tag_id).delete()
+
         self.session.delete(tag)
         self.session.commit()
     
