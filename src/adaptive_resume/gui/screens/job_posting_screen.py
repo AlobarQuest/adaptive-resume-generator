@@ -316,6 +316,16 @@ class JobPostingScreen(BaseScreen):
             if text.strip():
                 self.job_posting_text = text
                 self.uploaded_file_path = None
+
+                # Extract job title and company if possible (simple heuristic)
+                lines = text.split('\n')
+                if len(lines) >= 2:
+                    self.job_title = lines[0].strip()
+                    self.company_name = lines[1].strip() if len(lines) > 1 else ""
+                else:
+                    self.job_title = ""
+                    self.company_name = ""
+
                 self._update_upload_status("Pasted Text", len(text))
                 self.process_btn.setEnabled(True)
 
