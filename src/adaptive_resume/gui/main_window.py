@@ -45,6 +45,7 @@ from .dialogs import (
     CompanyData,
     ResumePDFPreviewDialog,
     ResumeImportDialog,
+    ResumePreviewDialog,
     EducationDialog,
     SkillDialog,
     RecentlyDeletedDialog,
@@ -387,15 +388,27 @@ class MainWindow(QMainWindow):
 
     def _import_resume(self) -> None:
         """Import resume to create or update a profile."""
-        from adaptive_resume.gui.database_manager import DatabaseManager
+        # Check if AI is enabled in settings
+        use_ai = self.settings.ai_enabled if hasattr(self.settings, 'ai_enabled') else False
 
-        # Get session for the dialog
-        session = DatabaseManager.get_session()
+        # Step 1: Open the import dialog to select and extract resume
+        import_dialog = ResumeImportDialog(parent=self, use_ai=use_ai)
+        if import_dialog.exec() != int(QDialog.DialogCode.Accepted):
+            return  # User cancelled
 
-        # Open the import dialog
-        dialog = ResumeImportDialog(session, self)
-        if dialog.exec() == int(QDialog.DialogCode.Accepted):
-            # The dialog handles the import internally
+        # Step 2: Get the extracted resume data
+        extracted_resume = import_dialog.get_extracted_resume()
+        if not extracted_resume:
+            QMessageBox.warning(self, "Import Failed", "No resume data was extracted.")
+            return
+
+        # Step 3: Open preview dialog to review and import the data
+        preview_dialog = ResumePreviewDialog(
+            extracted_resume=extracted_resume,
+            profile_id=1,  # Default profile ID for desktop app
+            parent=self
+        )
+        if preview_dialog.exec() == int(QDialog.DialogCode.Accepted):
             # After successful import, refresh all screens
             self._update_window_title()
             self._refresh_current_screen()
