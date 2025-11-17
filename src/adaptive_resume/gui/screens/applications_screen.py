@@ -44,6 +44,7 @@ try:
 except ImportError as exc:  # pragma: no cover
     raise ImportError("PyQt6 is required to use the GUI components") from exc
 
+from .base_screen import BaseScreen
 from adaptive_resume.gui.database_manager import DatabaseManager
 from adaptive_resume.services.application_tracking_service import ApplicationTrackingService
 from adaptive_resume.models.job_application import JobApplication
@@ -204,7 +205,7 @@ class KanbanColumn(QFrame):
         self.count_label.setText("0")
 
 
-class ApplicationsScreen(QWidget):
+class ApplicationsScreen(BaseScreen):
     """Main applications tracking screen.
 
     Features:
@@ -219,14 +220,12 @@ class ApplicationsScreen(QWidget):
     refresh_requested = pyqtSignal()
 
     def __init__(self, parent: Optional[QWidget] = None):
-        super().__init__(parent)
         self.session = DatabaseManager.get_session()
         self.service = ApplicationTrackingService(self.session)
-
-        self._build_ui()
+        super().__init__(parent)
         self.load_applications()
 
-    def _build_ui(self):
+    def _setup_ui(self):
         """Build the screen UI."""
         layout = QVBoxLayout(self)
 
@@ -624,6 +623,10 @@ class ApplicationsScreen(QWidget):
         if reply == QMessageBox.StandardButton.Yes:
             self.service.delete_application(application_id)
             self.load_applications()
+
+    def on_screen_shown(self) -> None:
+        """Refresh data when screen is shown."""
+        self.load_applications()
 
 
 __all__ = ['ApplicationsScreen']
