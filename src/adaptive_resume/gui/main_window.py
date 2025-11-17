@@ -264,9 +264,8 @@ class MainWindow(QMainWindow):
                 profile_id=tailored_resume.profile_id,
                 company_name=tailored_resume.company_name or "Unknown Company",
                 job_title=tailored_resume.job_title or "Unknown Position",
-                original_text="",  # We don't have the original text here
+                raw_text="",  # We don't have the original text here
                 requirements_json="{}",  # Empty requirements
-                parsed_skills_json="[]",
             )
             session.add(job_posting)
             session.commit()
