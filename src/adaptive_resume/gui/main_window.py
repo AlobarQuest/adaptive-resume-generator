@@ -265,22 +265,25 @@ class MainWindow(QMainWindow):
         # First, save the JobPosting if it doesn't exist
         job_posting_id = tailored_resume.job_posting_id
         if job_posting_id is None:
-            # Create and save a new job posting
-            # We'll create a minimal job posting record for tracking
+            # Create and save a new job posting with all metadata
             job_posting = JobPosting(
                 profile_id=tailored_resume.profile_id,
                 company_name=tailored_resume.company_name or "Unknown Company",
                 job_title=tailored_resume.job_title or "Unknown Position",
-                raw_text=tailored_resume.raw_job_text or "",  # Original job posting text
-                requirements_json="{}",  # Empty requirements (could be populated later)
-                source="paste",  # Track that this was pasted/typed in
+                raw_text=tailored_resume.raw_job_text or "",
+                location=tailored_resume.location or None,
+                salary_range=tailored_resume.salary_range or None,
+                application_url=tailored_resume.application_url or None,
+                notes=tailored_resume.notes or None,
+                requirements_json="{}",
+                source=tailored_resume.source or "paste",
             )
             session.add(job_posting)
             session.commit()
             session.refresh(job_posting)
             job_posting_id = job_posting.id
 
-            logger.info(f"Created new JobPosting: id={job_posting.id}, company={job_posting.company_name}, title={job_posting.job_title}")
+            logger.info(f"Created new JobPosting: id={job_posting.id}, company={job_posting.company_name}, title={job_posting.job_title}, location={job_posting.location}")
 
         # Create TailoredResumeModel from the dataclass
         selected_ids = [acc.bullet_id for acc in tailored_resume.selected_accomplishments]

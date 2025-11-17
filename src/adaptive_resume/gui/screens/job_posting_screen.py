@@ -21,8 +21,12 @@ try:
         QDialogButtonBox,
         QProgressDialog,
         QMessageBox,
+        QLineEdit,
+        QFormLayout,
+        QGroupBox,
     )
     from PyQt6.QtCore import Qt, QThread, pyqtSignal
+    from PyQt6.QtGui import QFont
 except ImportError as exc:
     raise ImportError("PyQt6 is required to use the GUI components") from exc
 
@@ -55,6 +59,11 @@ class ProcessingWorker(QThread):
         accomplishments: list,
         job_title: str = "",
         company_name: str = "",
+        location: str = "",
+        salary_range: str = "",
+        application_url: str = "",
+        notes: str = "",
+        source: str = "paste",
     ):
         super().__init__()
         self.job_text = job_text
@@ -62,6 +71,11 @@ class ProcessingWorker(QThread):
         self.accomplishments = accomplishments
         self.job_title = job_title
         self.company_name = company_name
+        self.location = location
+        self.salary_range = salary_range
+        self.application_url = application_url
+        self.notes = notes
+        self.source = source
 
     def run(self):
         """Process the job posting."""
@@ -89,8 +103,13 @@ class ProcessingWorker(QThread):
                 company_name=self.company_name,
             )
 
-            # Store the raw job text in the result for database persistence
+            # Store all metadata in the result for database persistence
             result.raw_job_text = self.job_text
+            result.location = self.location
+            result.salary_range = self.salary_range
+            result.application_url = self.application_url
+            result.notes = self.notes
+            result.source = self.source
 
             self.progress.emit("Complete!")
             self.finished.emit(result)
@@ -100,30 +119,146 @@ class ProcessingWorker(QThread):
             self.error.emit(str(e))
 
 
-class PasteTextDialog(QDialog):
-    """Dialog for pasting job posting text."""
+class FileMetadataDialog(QDialog):
+    """Dialog for adding metadata to an uploaded job posting file."""
 
-    def __init__(self, parent=None):
+    def __init__(self, company_name: str = "", job_title: str = "", parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Paste Job Posting Text")
+        self.setWindowTitle("Add Job Details")
         self.setMinimumSize(600, 400)
 
         layout = QVBoxLayout(self)
 
         # Instructions
-        label = QLabel("Paste the job posting text below:")
+        label = QLabel("Add details about this job posting:")
+        label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+        label.setStyleSheet("margin-bottom: 10px;")
+        layout.addWidget(label)
+
+        # Metadata fields form
+        form_layout = QFormLayout()
+
+        self.company_edit = QLineEdit(company_name)
+        self.company_edit.setPlaceholderText("e.g., Acme Corporation")
+        form_layout.addRow("Company:", self.company_edit)
+
+        self.title_edit = QLineEdit(job_title)
+        self.title_edit.setPlaceholderText("e.g., Senior Software Engineer")
+        form_layout.addRow("Job Title:", self.title_edit)
+
+        self.location_edit = QLineEdit()
+        self.location_edit.setPlaceholderText("e.g., San Francisco, CA (Remote)")
+        form_layout.addRow("Location:", self.location_edit)
+
+        self.salary_edit = QLineEdit()
+        self.salary_edit.setPlaceholderText("e.g., $120k - $180k")
+        form_layout.addRow("Salary/Pay:", self.salary_edit)
+
+        self.url_edit = QLineEdit()
+        self.url_edit.setPlaceholderText("e.g., https://company.com/careers/job-id")
+        form_layout.addRow("Application URL:", self.url_edit)
+
+        layout.addLayout(form_layout)
+
+        # Optional notes field
+        notes_label = QLabel("Notes (optional):")
+        notes_label.setStyleSheet("font-weight: bold; margin-top: 15px;")
+        layout.addWidget(notes_label)
+
+        self.notes_edit = QTextEdit()
+        self.notes_edit.setPlaceholderText("Add any personal notes about this position...")
+        self.notes_edit.setMaximumHeight(80)
+        layout.addWidget(self.notes_edit)
+
+        # Buttons
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        layout.addWidget(button_box)
+
+    def get_company(self) -> str:
+        """Get the company name."""
+        return self.company_edit.text().strip()
+
+    def get_title(self) -> str:
+        """Get the job title."""
+        return self.title_edit.text().strip()
+
+    def get_location(self) -> str:
+        """Get the location."""
+        return self.location_edit.text().strip()
+
+    def get_salary(self) -> str:
+        """Get the salary range."""
+        return self.salary_edit.text().strip()
+
+    def get_url(self) -> str:
+        """Get the application URL."""
+        return self.url_edit.text().strip()
+
+    def get_notes(self) -> str:
+        """Get the notes."""
+        return self.notes_edit.toPlainText().strip()
+
+
+class PasteTextDialog(QDialog):
+    """Dialog for pasting job posting text with metadata fields."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Paste Job Posting")
+        self.setMinimumSize(800, 700)
+
+        layout = QVBoxLayout(self)
+
+        # Instructions
+        label = QLabel("Paste the job posting text and add details:")
         label.setStyleSheet("font-weight: bold; margin-bottom: 10px;")
         layout.addWidget(label)
+
+        # Metadata fields group
+        metadata_group = QGroupBox("Job Details")
+        metadata_layout = QFormLayout()
+
+        self.company_edit = QLineEdit()
+        self.company_edit.setPlaceholderText("e.g., Acme Corporation")
+        metadata_layout.addRow("Company:", self.company_edit)
+
+        self.title_edit = QLineEdit()
+        self.title_edit.setPlaceholderText("e.g., Senior Software Engineer")
+        metadata_layout.addRow("Job Title:", self.title_edit)
+
+        self.location_edit = QLineEdit()
+        self.location_edit.setPlaceholderText("e.g., San Francisco, CA (Remote)")
+        metadata_layout.addRow("Location:", self.location_edit)
+
+        self.salary_edit = QLineEdit()
+        self.salary_edit.setPlaceholderText("e.g., $120k - $180k")
+        metadata_layout.addRow("Salary/Pay:", self.salary_edit)
+
+        self.url_edit = QLineEdit()
+        self.url_edit.setPlaceholderText("e.g., https://company.com/careers/job-id")
+        metadata_layout.addRow("Application URL:", self.url_edit)
+
+        metadata_group.setLayout(metadata_layout)
+        layout.addWidget(metadata_group)
+
+        # Job posting text
+        text_label = QLabel("Job Posting Text:")
+        text_label.setStyleSheet("font-weight: bold; margin-top: 10px;")
+        layout.addWidget(text_label)
 
         # Text edit
         self.text_edit = QTextEdit()
         self.text_edit.setPlaceholderText(
             "Paste job description here...\n\n"
             "Include:\n"
-            "• Job title and company\n"
             "• Required skills and qualifications\n"
             "• Responsibilities\n"
-            "• Preferred qualifications"
+            "• Preferred qualifications\n"
+            "• Benefits and perks"
         )
         layout.addWidget(self.text_edit)
 
@@ -134,6 +269,16 @@ class PasteTextDialog(QDialog):
 
         # Connect signal for character count
         self.text_edit.textChanged.connect(self._update_char_count)
+
+        # Optional notes field
+        notes_label = QLabel("Notes (optional):")
+        notes_label.setStyleSheet("font-weight: bold; margin-top: 10px;")
+        layout.addWidget(notes_label)
+
+        self.notes_edit = QTextEdit()
+        self.notes_edit.setPlaceholderText("Add any personal notes about this position...")
+        self.notes_edit.setMaximumHeight(60)
+        layout.addWidget(self.notes_edit)
 
         # Buttons
         button_box = QDialogButtonBox(
@@ -152,6 +297,30 @@ class PasteTextDialog(QDialog):
     def get_text(self) -> str:
         """Get the pasted text."""
         return self.text_edit.toPlainText()
+
+    def get_company(self) -> str:
+        """Get the company name."""
+        return self.company_edit.text().strip()
+
+    def get_title(self) -> str:
+        """Get the job title."""
+        return self.title_edit.text().strip()
+
+    def get_location(self) -> str:
+        """Get the location."""
+        return self.location_edit.text().strip()
+
+    def get_salary(self) -> str:
+        """Get the salary range."""
+        return self.salary_edit.text().strip()
+
+    def get_url(self) -> str:
+        """Get the application URL."""
+        return self.url_edit.text().strip()
+
+    def get_notes(self) -> str:
+        """Get the notes."""
+        return self.notes_edit.toPlainText().strip()
 
 
 class JobPostingScreen(BaseScreen):
@@ -172,6 +341,11 @@ class JobPostingScreen(BaseScreen):
         self.job_posting_text: Optional[str] = None
         self.job_title: str = ""
         self.company_name: str = ""
+        # Metadata fields
+        self.location: str = ""
+        self.salary_range: str = ""
+        self.application_url: str = ""
+        self.notes: str = ""
 
         super().__init__(parent)
 
@@ -317,14 +491,22 @@ class JobPostingScreen(BaseScreen):
                 self.job_posting_text = text
                 self.uploaded_file_path = None
 
-                # Extract job title and company if possible (simple heuristic)
-                lines = text.split('\n')
-                if len(lines) >= 2:
-                    self.job_title = lines[0].strip()
-                    self.company_name = lines[1].strip() if len(lines) > 1 else ""
-                else:
-                    self.job_title = ""
-                    self.company_name = ""
+                # Get metadata from dialog
+                self.company_name = dialog.get_company()
+                self.job_title = dialog.get_title()
+                self.location = dialog.get_location()
+                self.salary_range = dialog.get_salary()
+                self.application_url = dialog.get_url()
+                self.notes = dialog.get_notes()
+
+                # Fallback: Extract job title and company from text if not provided
+                if not self.job_title or not self.company_name:
+                    lines = text.split('\n')
+                    if len(lines) >= 2:
+                        if not self.job_title:
+                            self.job_title = lines[0].strip()
+                        if not self.company_name:
+                            self.company_name = lines[1].strip() if len(lines) > 1 else ""
 
                 self._update_upload_status("Pasted Text", len(text))
                 self.process_btn.setEnabled(True)
@@ -342,10 +524,19 @@ class JobPostingScreen(BaseScreen):
             # Single import
             self.job_posting_text = imported_data.description
             self.uploaded_file_path = None
+            self._imported_from_url = True
 
             # Store company and title for processing
             self.company_name = imported_data.company_name or ""
             self.job_title = imported_data.job_title or ""
+
+            # Store location and URL if available
+            self.location = getattr(imported_data, 'location', "") or ""
+            self.application_url = getattr(imported_data, 'url', "") or ""
+
+            # Initialize other metadata fields
+            self.salary_range = ""
+            self.notes = ""
 
             self._update_upload_status(
                 f"Imported from {imported_data.source_platform.title()}",
@@ -360,8 +551,17 @@ class JobPostingScreen(BaseScreen):
                 first_job = imported_data[0]
                 self.job_posting_text = first_job.description
                 self.uploaded_file_path = None
+                self._imported_from_url = True
                 self.company_name = first_job.company_name or ""
                 self.job_title = first_job.job_title or ""
+
+                # Store location and URL if available
+                self.location = getattr(first_job, 'location', "") or ""
+                self.application_url = getattr(first_job, 'url', "") or ""
+
+                # Initialize other metadata fields
+                self.salary_range = ""
+                self.notes = ""
 
                 self._update_upload_status(
                     f"Imported {len(imported_data)} jobs (showing first)",
@@ -384,18 +584,47 @@ class JobPostingScreen(BaseScreen):
             self.job_posting_text = parser.parse_file(file_path)
             self.uploaded_file_path = file_path
 
-            # Extract job title and company if possible (simple heuristic)
+            # Extract job title and company if possible (simple heuristic for defaults)
+            extracted_title = ""
+            extracted_company = ""
             lines = self.job_posting_text.split('\n')
             if len(lines) >= 2:
-                self.job_title = lines[0].strip()
-                self.company_name = lines[1].strip() if len(lines) > 1 else ""
+                extracted_title = lines[0].strip()
+                extracted_company = lines[1].strip() if len(lines) > 1 else ""
 
-            # Update UI
-            file_name = file_path.split('/')[-1].split('\\')[-1]
-            self._update_upload_status(file_name, len(self.job_posting_text))
+            # Show metadata dialog
+            metadata_dialog = FileMetadataDialog(
+                company_name=extracted_company,
+                job_title=extracted_title,
+                parent=self
+            )
 
-            # Enable process button
-            self.process_btn.setEnabled(True)
+            if metadata_dialog.exec() == QDialog.DialogCode.Accepted:
+                # Get metadata from dialog
+                self.company_name = metadata_dialog.get_company()
+                self.job_title = metadata_dialog.get_title()
+                self.location = metadata_dialog.get_location()
+                self.salary_range = metadata_dialog.get_salary()
+                self.application_url = metadata_dialog.get_url()
+                self.notes = metadata_dialog.get_notes()
+
+                # Fallback to extracted values if user didn't provide them
+                if not self.job_title:
+                    self.job_title = extracted_title
+                if not self.company_name:
+                    self.company_name = extracted_company
+
+                # Update UI
+                file_name = file_path.split('/')[-1].split('\\')[-1]
+                self._update_upload_status(file_name, len(self.job_posting_text))
+
+                # Enable process button
+                self.process_btn.setEnabled(True)
+            else:
+                # User cancelled, clear the loaded file
+                self.job_posting_text = None
+                self.uploaded_file_path = None
+                self.process_btn.setEnabled(False)
 
         except Exception as e:
             logger.error(f"Error loading file: {e}", exc_info=True)
@@ -442,6 +671,14 @@ class JobPostingScreen(BaseScreen):
         progress.setMinimumDuration(0)
         progress.setValue(0)
 
+        # Determine source
+        if self.uploaded_file_path:
+            source = "file"
+        elif hasattr(self, '_imported_from_url') and self._imported_from_url:
+            source = "import"
+        else:
+            source = "paste"
+
         # Create worker thread
         self.worker = ProcessingWorker(
             job_text=self.job_posting_text,
@@ -449,6 +686,11 @@ class JobPostingScreen(BaseScreen):
             accomplishments=accomplishments,
             job_title=self.job_title,
             company_name=self.company_name,
+            location=self.location,
+            salary_range=self.salary_range,
+            application_url=self.application_url,
+            notes=self.notes,
+            source=source,
         )
 
         # Connect signals

@@ -35,6 +35,11 @@ class TailoredResume:
         job_title: Target job title
         company_name: Target company name
         raw_job_text: Original job posting text (for database persistence)
+        location: Job location
+        salary_range: Salary/pay range
+        application_url: URL to apply
+        notes: Personal notes about the position
+        source: Source of job posting (paste, file, import, etc.)
         id: Database ID after persistence (set by main_window)
     """
     profile_id: int
@@ -48,6 +53,11 @@ class TailoredResume:
     job_title: str = ""
     company_name: str = ""
     raw_job_text: str = ""  # Original job posting text
+    location: str = ""
+    salary_range: str = ""
+    application_url: str = ""
+    notes: str = ""
+    source: str = "paste"  # Default source
     id: Optional[int] = None  # Database ID after persistence
 
 
