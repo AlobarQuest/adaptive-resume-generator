@@ -56,6 +56,9 @@ job-analysis = [
     "spacy>=3.6.0",            # NLP analysis (shared with nlp)
     "scikit-learn>=1.3.0",     # Similarity scoring (shared with nlp)
     "anthropic>=0.7.0",        # Optional AI enhancement
+    "requests>=2.31.0",        # HTTP requests for URL imports
+    "beautifulsoup4>=4.12.0",  # HTML parsing for web scraping
+    "chardet>=5.2.0",          # Character encoding detection
 ]
 
 all = [
