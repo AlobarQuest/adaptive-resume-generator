@@ -20,6 +20,10 @@ try:
         QTextEdit,
         QComboBox,
         QMessageBox,
+        QRadioButton,
+        QButtonGroup,
+        QGroupBox,
+        QWidget,
     )
     from PyQt6.QtCore import Qt, pyqtSignal
 except ImportError as exc:  # pragma: no cover
@@ -81,12 +85,168 @@ class AddApplicationDialog(QDialog):
         layout.addWidget(title)
 
         subtitle = QLabel(
-            "Enter essential information about the job application. "
-            "You can add more details later."
+            "Choose to track an existing job posting or create a new application."
         )
         subtitle.setWordWrap(True)
         subtitle.setStyleSheet("color: #888; margin-bottom: 15px;")
         layout.addWidget(subtitle)
+
+        # Mode selection
+        mode_group = QGroupBox("Application Source")
+        mode_layout = QVBoxLayout()
+
+        self.button_group = QButtonGroup()
+
+        self.existing_radio = QRadioButton("Select from Existing Job Postings")
+        self.existing_radio.setToolTip("Choose a job posting you've already imported/uploaded")
+        self.button_group.addButton(self.existing_radio, 1)
+        mode_layout.addWidget(self.existing_radio)
+
+        self.new_radio = QRadioButton("Create New Application (Manual Entry)")
+        self.new_radio.setToolTip("Manually enter job details for a new application")
+        self.button_group.addButton(self.new_radio, 2)
+        mode_layout.addWidget(self.new_radio)
+
+        # Default to existing if we have postings, otherwise new
+        self.existing_radio.setChecked(True)
+
+        mode_group.setLayout(mode_layout)
+        layout.addWidget(mode_group)
+
+        # Connect radio buttons to update UI
+        self.existing_radio.toggled.connect(self._on_mode_changed)
+
+        # Container for existing posting selector
+        self.existing_container = self._build_existing_selector()
+        layout.addWidget(self.existing_container)
+
+        # Container for manual entry form
+        self.manual_container = self._build_manual_form()
+        layout.addWidget(self.manual_container)
+
+        # Initialize mode
+        self._on_mode_changed()
+
+        layout.addStretch()
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+
+        # Create button
+        create_button = QPushButton("Create Application")
+        create_button.setObjectName("primaryButton")
+        create_button.setMinimumHeight(40)
+        create_button.setStyleSheet("font-weight: bold; padding: 0 20px;")
+        create_button.clicked.connect(self._create_application)
+        button_layout.addWidget(create_button)
+
+        # Create and view button
+        create_view_button = QPushButton("Create && View Details")
+        create_view_button.setMinimumHeight(40)
+        create_view_button.clicked.connect(lambda: self._create_application(view_after=True))
+        button_layout.addWidget(create_view_button)
+
+        # Cancel button
+        cancel_button = QPushButton("Cancel")
+        cancel_button.setMinimumHeight(40)
+        cancel_button.clicked.connect(self.reject)
+        button_layout.addWidget(cancel_button)
+
+        layout.addLayout(button_layout)
+
+    def _build_existing_selector(self) -> QWidget:
+        """Build the existing job posting selector UI."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        # Info label
+        info_label = QLabel(
+            "Select a job posting you've previously imported or uploaded. "
+            "The application will be pre-filled with job details."
+        )
+        info_label.setWordWrap(True)
+        info_label.setStyleSheet("color: #888; margin-bottom: 10px;")
+        layout.addWidget(info_label)
+
+        # Job posting dropdown
+        form = QFormLayout()
+
+        self.posting_combo = QComboBox()
+        self.posting_combo.setMinimumHeight(40)
+
+        # Load job postings
+        self._load_job_postings()
+
+        form.addRow("Job Posting*:", self.posting_combo)
+
+        # Status and Priority for selected posting
+        status_priority_layout = QHBoxLayout()
+
+        # Status
+        status_label = QLabel("Status:")
+        status_priority_layout.addWidget(status_label)
+
+        self.existing_status_combo = QComboBox()
+        for status in JobApplication.VALID_STATUSES:
+            self.existing_status_combo.addItem(status.replace('_', ' ').title(), status)
+
+        # Default to "interested" for existing postings
+        status_index = self.existing_status_combo.findData(JobApplication.STATUS_INTERESTED)
+        if status_index >= 0:
+            self.existing_status_combo.setCurrentIndex(status_index)
+
+        status_priority_layout.addWidget(self.existing_status_combo)
+
+        # Priority
+        priority_label = QLabel("Priority:")
+        status_priority_layout.addWidget(priority_label)
+
+        self.existing_priority_combo = QComboBox()
+        for priority in JobApplication.VALID_PRIORITIES:
+            self.existing_priority_combo.addItem(priority.title(), priority)
+
+        # Default to "medium"
+        priority_index = self.existing_priority_combo.findData(JobApplication.PRIORITY_MEDIUM)
+        if priority_index >= 0:
+            self.existing_priority_combo.setCurrentIndex(priority_index)
+
+        status_priority_layout.addWidget(self.existing_priority_combo)
+
+        form.addRow("", status_priority_layout)
+
+        layout.addLayout(form)
+
+        # Preview label showing selected posting details
+        self.preview_label = QLabel("")
+        self.preview_label.setWordWrap(True)
+        self.preview_label.setStyleSheet(
+            "background: #2a3a4a; padding: 10px; border-radius: 4px; color: #ccc; margin-top: 10px;"
+        )
+        self.preview_label.setMinimumHeight(80)
+        layout.addWidget(self.preview_label)
+
+        # Connect combo box to update preview
+        self.posting_combo.currentIndexChanged.connect(self._update_posting_preview)
+        self._update_posting_preview()
+
+        layout.addStretch()
+
+        return widget
+
+    def _build_manual_form(self) -> QWidget:
+        """Build the manual entry form UI."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        # Info label
+        info_label = QLabel(
+            "Enter essential information about the job application. "
+            "You can add more details later."
+        )
+        info_label.setWordWrap(True)
+        info_label.setStyleSheet("color: #888; margin-bottom: 10px;")
+        layout.addWidget(info_label)
 
         # Form
         form = QFormLayout()
@@ -161,33 +321,79 @@ class AddApplicationDialog(QDialog):
         note.setStyleSheet("color: #888; font-size: 11px; margin-top: 10px;")
         layout.addWidget(note)
 
-        layout.addStretch()
+        return widget
 
-        # Buttons
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
+    def _load_job_postings(self):
+        """Load available job postings from database."""
+        try:
+            postings = self.session.query(JobPosting).filter_by(
+                profile_id=self.profile_id
+            ).order_by(JobPosting.uploaded_at.desc()).all()
 
-        # Create button
-        create_button = QPushButton("Create Application")
-        create_button.setObjectName("primaryButton")
-        create_button.setMinimumHeight(40)
-        create_button.setStyleSheet("font-weight: bold; padding: 0 20px;")
-        create_button.clicked.connect(self._create_application)
-        button_layout.addWidget(create_button)
+            self.posting_combo.clear()
+            self.posting_combo.addItem("-- Select a Job Posting --", None)
 
-        # Create and view button
-        create_view_button = QPushButton("Create && View Details")
-        create_view_button.setMinimumHeight(40)
-        create_view_button.clicked.connect(lambda: self._create_application(view_after=True))
-        button_layout.addWidget(create_view_button)
+            for posting in postings:
+                display_text = f"{posting.company_name} - {posting.job_title}"
+                if posting.location:
+                    display_text += f" ({posting.location})"
 
-        # Cancel button
-        cancel_button = QPushButton("Cancel")
-        cancel_button.setMinimumHeight(40)
-        cancel_button.clicked.connect(self.reject)
-        button_layout.addWidget(cancel_button)
+                self.posting_combo.addItem(display_text, posting.id)
 
-        layout.addLayout(button_layout)
+            # If no postings, disable the existing radio button and select manual entry
+            if len(postings) == 0:
+                self.existing_radio.setEnabled(False)
+                self.new_radio.setChecked(True)
+                info_text = "No job postings available. Please use manual entry or upload a job posting first."
+                self.posting_combo.setToolTip(info_text)
+
+        except Exception as e:
+            QMessageBox.warning(
+                self,
+                "Load Error",
+                f"Failed to load job postings:\n{str(e)}"
+            )
+
+    def _update_posting_preview(self):
+        """Update the preview label with selected posting details."""
+        posting_id = self.posting_combo.currentData()
+
+        if not posting_id:
+            self.preview_label.setText("No job posting selected")
+            return
+
+        try:
+            posting = self.session.query(JobPosting).filter_by(id=posting_id).first()
+
+            if not posting:
+                self.preview_label.setText("Job posting not found")
+                return
+
+            preview_text = f"<b>{posting.company_name} - {posting.job_title}</b><br/>"
+
+            if posting.location:
+                preview_text += f"📍 {posting.location}<br/>"
+
+            if posting.salary_range:
+                preview_text += f"💰 {posting.salary_range}<br/>"
+
+            if posting.application_url:
+                preview_text += f"🔗 <a href='{posting.application_url}'>{posting.application_url[:50]}...</a><br/>"
+
+            preview_text += f"<br/><small>Uploaded: {posting.uploaded_at.strftime('%Y-%m-%d')}</small>"
+
+            self.preview_label.setText(preview_text)
+            self.preview_label.setOpenExternalLinks(True)
+
+        except Exception as e:
+            self.preview_label.setText(f"Error loading preview: {str(e)}")
+
+    def _on_mode_changed(self):
+        """Handle mode selection change."""
+        is_existing = self.existing_radio.isChecked()
+
+        self.existing_container.setVisible(is_existing)
+        self.manual_container.setVisible(not is_existing)
 
     def _prefill_from_posting(self):
         """Pre-fill form from JobPosting."""
@@ -208,6 +414,90 @@ class AddApplicationDialog(QDialog):
 
     def _create_application(self, view_after: bool = False):
         """Create the application.
+
+        Args:
+            view_after: If True, open detail dialog after creation
+        """
+        is_existing = self.existing_radio.isChecked()
+
+        if is_existing:
+            # Mode: Select from existing job posting
+            return self._create_from_existing_posting(view_after)
+        else:
+            # Mode: Manual entry
+            return self._create_from_manual_entry(view_after)
+
+    def _create_from_existing_posting(self, view_after: bool = False):
+        """Create application from selected job posting.
+
+        Args:
+            view_after: If True, open detail dialog after creation
+        """
+        # Validate job posting selection
+        posting_id = self.posting_combo.currentData()
+
+        if not posting_id:
+            QMessageBox.warning(
+                self,
+                "No Selection",
+                "Please select a job posting from the dropdown."
+            )
+            self.posting_combo.setFocus()
+            return
+
+        try:
+            # Fetch the job posting
+            posting = self.session.query(JobPosting).filter_by(id=posting_id).first()
+
+            if not posting:
+                QMessageBox.critical(
+                    self,
+                    "Error",
+                    "Selected job posting not found in database."
+                )
+                return
+
+            # Create application linked to posting
+            app = self.service.create_application(
+                profile_id=self.profile_id,
+                company_name=posting.company_name,
+                position_title=posting.job_title,
+                job_description=posting.raw_text or None,
+                job_url=posting.application_url or None,
+                job_posting_id=posting.id,
+                status=self.existing_status_combo.currentData(),
+                priority=self.existing_priority_combo.currentData(),
+                location=posting.location or None,
+                salary_range=posting.salary_range or None,
+            )
+
+            self.application_created.emit(app.id)
+
+            # Show confirmation
+            QMessageBox.information(
+                self,
+                "Application Created",
+                f"Successfully created application for {posting.company_name} - {posting.job_title}"
+            )
+
+            # If view_after, open detail dialog
+            if view_after:
+                from .application_detail_dialog import ApplicationDetailDialog
+
+                detail_dialog = ApplicationDetailDialog(app.id, parent=self.parent())
+                detail_dialog.exec()
+
+            self.accept()
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Create Error",
+                f"Failed to create application:\n{str(e)}"
+            )
+
+    def _create_from_manual_entry(self, view_after: bool = False):
+        """Create application from manual form entry.
 
         Args:
             view_after: If True, open detail dialog after creation
