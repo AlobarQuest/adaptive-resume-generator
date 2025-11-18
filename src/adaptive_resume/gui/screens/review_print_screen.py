@@ -182,46 +182,10 @@ class ReviewPrintScreen(BaseScreen):
         """Generate PDF for the selected resume."""
         try:
             from adaptive_resume.gui.dialogs.resume_pdf_preview_dialog import ResumePDFPreviewDialog
-            from adaptive_resume.services.resume_generator import TailoredResume
-            from adaptive_resume.services.matching_engine import ScoredAccomplishment
 
-            # Convert TailoredResumeModel to TailoredResume dataclass
-            accomplishments_data = json.loads(resume.selected_accomplishments_json) if resume.selected_accomplishments_json else []
-
-            # Reconstruct ScoredAccomplishment objects
-            scored_accomplishments = []
-            for acc_data in accomplishments_data:
-                scored_acc = ScoredAccomplishment(
-                    bullet_id=acc_data.get('bullet_id'),
-                    job_id=acc_data.get('job_id'),
-                    text=acc_data.get('text', ''),
-                    skill_match_score=acc_data.get('skill_match_score', 0.0),
-                    semantic_score=acc_data.get('semantic_score', 0.0),
-                    recency_score=acc_data.get('recency_score', 0.0),
-                    metrics_score=acc_data.get('metrics_score', 0.0),
-                    total_score=acc_data.get('total_score', 0.0),
-                    matched_skills=acc_data.get('matched_skills', []),
-                    relevance_explanation=acc_data.get('relevance_explanation', '')
-                )
-                scored_accomplishments.append(scored_acc)
-
-            # Create TailoredResume dataclass
-            tailored_resume = TailoredResume(
-                profile_id=resume.profile_id,
-                job_posting_id=resume.job_posting_id,
-                selected_accomplishments=scored_accomplishments,
-                skill_coverage=json.loads(resume.skill_coverage_json) if resume.skill_coverage_json else {},
-                coverage_percentage=resume.coverage_percentage or 0.0,
-                gaps=json.loads(resume.gaps_json) if resume.gaps_json else [],
-                recommendations=json.loads(resume.recommendations_json) if resume.recommendations_json else [],
-                created_at=resume.created_at,
-                job_title=resume.job_posting.job_title if resume.job_posting else "Unknown Position",
-                company_name=resume.job_posting.company_name if resume.job_posting else "Unknown Company",
-                id=resume.id
-            )
-
-            # Open PDF preview dialog
-            dialog = ResumePDFPreviewDialog(tailored_resume, parent=self)
+            # Open PDF preview dialog with resume ID
+            # The dialog will load the resume from the database
+            dialog = ResumePDFPreviewDialog(resume.id, parent=self)
             dialog.exec()
 
         except Exception as e:
