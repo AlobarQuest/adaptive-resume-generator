@@ -232,31 +232,41 @@ class ResumePDFGenerator:
     ) -> List[Dict[str, Any]]:
         """Transform selected accomplishments to template format.
 
+        Uses the stored selected_accomplishments_json which contains the exact
+        bullet text and metadata from when the resume was tailored. This ensures
+        PDFs can be regenerated exactly as they were, even if bullets are edited later.
+
         Args:
-            tailored_resume: TailoredResume with selected accomplishment IDs
+            tailored_resume: TailoredResumeModel with stored accomplishment data
 
         Returns:
             List of accomplishment dictionaries
         """
-        # Parse selected accomplishment IDs
+        # Parse stored accomplishment data (includes text, scores, metadata)
         try:
-            selected_ids = json.loads(tailored_resume.selected_accomplishment_ids)
-        except (json.JSONDecodeError, TypeError):
-            selected_ids = []
+            accomplishments_data = json.loads(tailored_resume.selected_accomplishments_json)
+        except (json.JSONDecodeError, TypeError, AttributeError):
+            # Fallback to old method if selected_accomplishments_json is not available
+            accomplishments_data = []
 
-        if not selected_ids:
+        if not accomplishments_data:
             return []
 
-        # Load selected bullet points
-        bullet_points = self.session.query(BulletPoint).filter(
-            BulletPoint.id.in_(selected_ids)
-        ).all()
+        # Extract unique job IDs to query for job details
+        from adaptive_resume.models.job import Job
+        job_ids = list(set(acc.get('job_id') for acc in accomplishments_data if acc.get('job_id')))
 
-        # Transform to template format
+        # Load all related jobs in one query
+        jobs_dict = {}
+        if job_ids:
+            jobs = self.session.query(Job).filter(Job.id.in_(job_ids)).all()
+            jobs_dict = {job.id: job for job in jobs}
+
+        # Transform to template format using stored data
         accomplishments = []
-        for bullet in bullet_points:
-            # Load job relationship
-            job = bullet.job
+        for acc_data in accomplishments_data:
+            job_id = acc_data.get('job_id')
+            job = jobs_dict.get(job_id) if job_id else None
 
             # Parse location (may be "City, ST" format)
             city = None
@@ -270,8 +280,8 @@ class ResumePDFGenerator:
                     city = job.location.strip()
 
             accomplishments.append({
-                'id': bullet.id,
-                'text': bullet.content,  # BulletPoint uses 'content' field
+                'id': acc_data.get('bullet_id'),
+                'text': acc_data.get('text', ''),  # Use stored text from when it was tailored
                 'company_name': job.company_name if job else 'Unknown',
                 'job_title': job.job_title if job else 'Position',
                 'start_date': str(job.start_date) if job and job.start_date else None,
