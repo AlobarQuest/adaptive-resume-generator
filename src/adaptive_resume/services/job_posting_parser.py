@@ -430,3 +430,89 @@ class JobPostingParser:
     def is_docx_supported(self) -> bool:
         """Check if DOCX parsing is available."""
         return DOCX_AVAILABLE
+
+    def extract_metadata(self, text: str) -> dict:
+        """Extract metadata from job posting text.
+
+        Attempts to extract:
+        - Company name
+        - Job title
+        - Location
+        - Salary range
+        - Application URL
+
+        Args:
+            text: Job posting text
+
+        Returns:
+            Dictionary with extracted metadata (empty strings if not found)
+        """
+        metadata = {
+            'company_name': '',
+            'job_title': '',
+            'location': '',
+            'salary_range': '',
+            'application_url': ''
+        }
+
+        # Extract URLs (look for application links)
+        url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
+        urls = re.findall(url_pattern, text)
+        if urls:
+            # Prefer URLs that look like job application links
+            for url in urls:
+                if any(keyword in url.lower() for keyword in ['apply', 'job', 'career', 'position', 'application']):
+                    metadata['application_url'] = url
+                    break
+            # If no specific application URL found, use the first URL
+            if not metadata['application_url']:
+                metadata['application_url'] = urls[0]
+
+        # Extract salary information
+        salary_patterns = [
+            r'\$\s*\d{1,3}(?:,\d{3})*(?:\s*[-–—to]\s*\$?\s*\d{1,3}(?:,\d{3})*)?(?:\s*(?:per|/)\s*(?:year|yr|hour|hr|annum))?',
+            r'\$\s*\d{1,3}[kK](?:\s*[-–—to]\s*\$?\s*\d{1,3}[kK])?',
+            r'\d{1,3}(?:,\d{3})*\s*[-–—to]\s*\d{1,3}(?:,\d{3})*',
+        ]
+        for pattern in salary_patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                metadata['salary_range'] = match.group(0).strip()
+                break
+
+        # Extract location (common patterns)
+        location_patterns = [
+            r'(?:Location|Office|Based in|Work from)[\s:]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,\s*[A-Z]{2}(?:\s*\([Rr]emote\))?)',
+            r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,\s*[A-Z]{2}(?:\s*[-–—]\s*[Rr]emote)?)',
+            r'([A-Z][a-z]+,\s*[A-Z]{2,})',
+            r'(Remote|Hybrid|On-?site)',
+        ]
+        for pattern in location_patterns:
+            match = re.search(pattern, text)
+            if match:
+                metadata['location'] = match.group(1).strip()
+                break
+
+        # Extract company name and job title from first few lines
+        lines = [line.strip() for line in text.split('\n') if line.strip()]
+        if lines:
+            # First line often contains job title
+            if len(lines[0]) < 100 and not lines[0].startswith(('http', 'www')):
+                metadata['job_title'] = lines[0]
+
+            # Second or third line often contains company name
+            for i in range(1, min(4, len(lines))):
+                line = lines[i]
+                # Skip lines that look like URLs, dates, or are too long
+                if (len(line) < 100 and
+                    not line.startswith(('http', 'www', 'Posted', 'Apply')) and
+                    not re.match(r'^\d{1,2}[/-]\d{1,2}[/-]\d{2,4}', line)):
+                    # Look for company indicators
+                    if any(keyword in line.lower() for keyword in ['company', 'inc', 'corp', 'ltd', 'llc']):
+                        metadata['company_name'] = line
+                        break
+                    # If no company keyword found, use second non-empty line as fallback
+                    if not metadata['company_name'] and i == 1:
+                        metadata['company_name'] = line
+
+        return metadata

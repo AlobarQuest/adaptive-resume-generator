@@ -122,7 +122,15 @@ class ProcessingWorker(QThread):
 class FileMetadataDialog(QDialog):
     """Dialog for adding metadata to an uploaded job posting file."""
 
-    def __init__(self, company_name: str = "", job_title: str = "", parent=None):
+    def __init__(
+        self,
+        company_name: str = "",
+        job_title: str = "",
+        location: str = "",
+        salary_range: str = "",
+        application_url: str = "",
+        parent=None
+    ):
         super().__init__(parent)
         self.setWindowTitle("Add Job Details")
         self.setMinimumSize(600, 400)
@@ -130,10 +138,17 @@ class FileMetadataDialog(QDialog):
         layout = QVBoxLayout(self)
 
         # Instructions
-        label = QLabel("Add details about this job posting:")
+        label = QLabel("Review and edit job details extracted from the file:")
         label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
         label.setStyleSheet("margin-bottom: 10px;")
         layout.addWidget(label)
+
+        # Info label if any fields were auto-filled
+        auto_filled = any([company_name, job_title, location, salary_range, application_url])
+        if auto_filled:
+            info_label = QLabel("✓ Some fields were automatically detected. Please review and edit as needed.")
+            info_label.setStyleSheet("color: #4a90e2; font-style: italic; margin-bottom: 10px;")
+            layout.addWidget(info_label)
 
         # Metadata fields form
         form_layout = QFormLayout()
@@ -146,15 +161,15 @@ class FileMetadataDialog(QDialog):
         self.title_edit.setPlaceholderText("e.g., Senior Software Engineer")
         form_layout.addRow("Job Title:", self.title_edit)
 
-        self.location_edit = QLineEdit()
+        self.location_edit = QLineEdit(location)
         self.location_edit.setPlaceholderText("e.g., San Francisco, CA (Remote)")
         form_layout.addRow("Location:", self.location_edit)
 
-        self.salary_edit = QLineEdit()
+        self.salary_edit = QLineEdit(salary_range)
         self.salary_edit.setPlaceholderText("e.g., $120k - $180k")
         form_layout.addRow("Salary/Pay:", self.salary_edit)
 
-        self.url_edit = QLineEdit()
+        self.url_edit = QLineEdit(application_url)
         self.url_edit.setPlaceholderText("e.g., https://company.com/careers/job-id")
         form_layout.addRow("Application URL:", self.url_edit)
 
@@ -262,10 +277,21 @@ class PasteTextDialog(QDialog):
         )
         layout.addWidget(self.text_edit)
 
-        # Character count
+        # Bottom row: Character count and Extract button
+        bottom_row = QHBoxLayout()
+
         self.char_count_label = QLabel("0 characters")
         self.char_count_label.setStyleSheet("color: #666; font-size: 11px;")
-        layout.addWidget(self.char_count_label)
+        bottom_row.addWidget(self.char_count_label)
+
+        bottom_row.addStretch()
+
+        extract_btn = QPushButton("📋 Extract Info from Text")
+        extract_btn.setToolTip("Automatically extract company, title, location, salary, and URL from the pasted text")
+        extract_btn.clicked.connect(self._extract_metadata)
+        bottom_row.addWidget(extract_btn)
+
+        layout.addLayout(bottom_row)
 
         # Connect signal for character count
         self.text_edit.textChanged.connect(self._update_char_count)
@@ -293,6 +319,52 @@ class PasteTextDialog(QDialog):
         text = self.text_edit.toPlainText()
         count = len(text)
         self.char_count_label.setText(f"{count:,} characters")
+
+    def _extract_metadata(self):
+        """Extract metadata from pasted text and populate fields."""
+        text = self.text_edit.toPlainText()
+        if not text.strip():
+            QMessageBox.information(
+                self,
+                "No Text",
+                "Please paste job posting text first before extracting metadata."
+            )
+            return
+
+        # Use the parser to extract metadata
+        parser = JobPostingParser()
+        metadata = parser.extract_metadata(text)
+
+        # Only populate empty fields (don't overwrite user input)
+        if not self.company_edit.text() and metadata.get('company_name'):
+            self.company_edit.setText(metadata['company_name'])
+
+        if not self.title_edit.text() and metadata.get('job_title'):
+            self.title_edit.setText(metadata['job_title'])
+
+        if not self.location_edit.text() and metadata.get('location'):
+            self.location_edit.setText(metadata['location'])
+
+        if not self.salary_edit.text() and metadata.get('salary_range'):
+            self.salary_edit.setText(metadata['salary_range'])
+
+        if not self.url_edit.text() and metadata.get('application_url'):
+            self.url_edit.setText(metadata['application_url'])
+
+        # Show feedback
+        extracted_fields = [k for k, v in metadata.items() if v]
+        if extracted_fields:
+            QMessageBox.information(
+                self,
+                "Extraction Complete",
+                f"Successfully extracted: {', '.join(extracted_fields)}"
+            )
+        else:
+            QMessageBox.information(
+                self,
+                "No Data Found",
+                "Could not automatically extract metadata from the text. Please fill in the fields manually."
+            )
 
     def get_text(self) -> str:
         """Get the pasted text."""
@@ -584,35 +656,27 @@ class JobPostingScreen(BaseScreen):
             self.job_posting_text = parser.parse_file(file_path)
             self.uploaded_file_path = file_path
 
-            # Extract job title and company if possible (simple heuristic for defaults)
-            extracted_title = ""
-            extracted_company = ""
-            lines = self.job_posting_text.split('\n')
-            if len(lines) >= 2:
-                extracted_title = lines[0].strip()
-                extracted_company = lines[1].strip() if len(lines) > 1 else ""
+            # Extract metadata from job posting text
+            metadata = parser.extract_metadata(self.job_posting_text)
 
-            # Show metadata dialog
+            # Show metadata dialog with extracted data pre-filled
             metadata_dialog = FileMetadataDialog(
-                company_name=extracted_company,
-                job_title=extracted_title,
+                company_name=metadata.get('company_name', ''),
+                job_title=metadata.get('job_title', ''),
+                location=metadata.get('location', ''),
+                salary_range=metadata.get('salary_range', ''),
+                application_url=metadata.get('application_url', ''),
                 parent=self
             )
 
             if metadata_dialog.exec() == QDialog.DialogCode.Accepted:
-                # Get metadata from dialog
+                # Get metadata from dialog (already pre-filled with extracted data)
                 self.company_name = metadata_dialog.get_company()
                 self.job_title = metadata_dialog.get_title()
                 self.location = metadata_dialog.get_location()
                 self.salary_range = metadata_dialog.get_salary()
                 self.application_url = metadata_dialog.get_url()
                 self.notes = metadata_dialog.get_notes()
-
-                # Fallback to extracted values if user didn't provide them
-                if not self.job_title:
-                    self.job_title = extracted_title
-                if not self.company_name:
-                    self.company_name = extracted_company
 
                 # Update UI
                 file_name = file_path.split('/')[-1].split('\\')[-1]

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Optional
 import logging
+import webbrowser
 
 try:
     from PyQt6.QtWidgets import (
@@ -270,26 +271,44 @@ class ManageJobPostingsScreen(BaseScreen):
             # Actions (buttons)
             actions_widget = QWidget()
             actions_layout = QHBoxLayout(actions_widget)
-            actions_layout.setContentsMargins(4, 2, 4, 2)
+            actions_layout.setContentsMargins(4, 4, 4, 4)
             actions_layout.setSpacing(4)
+
+            # Apply Online button (only if URL is available)
+            if posting.application_url:
+                apply_btn = QPushButton("🌐 Apply Online")
+                apply_btn.setMinimumHeight(30)
+                apply_btn.setMaximumHeight(35)
+                apply_btn.setStyleSheet("QPushButton { background-color: #4a90e2; color: white; font-weight: bold; }")
+                apply_btn.clicked.connect(lambda checked, p=posting: self._on_apply_online(p))
+                actions_layout.addWidget(apply_btn)
 
             # View/Edit button
             view_btn = QPushButton("📝 Edit")
+            view_btn.setMinimumHeight(30)
+            view_btn.setMaximumHeight(35)
             view_btn.clicked.connect(lambda checked, p=posting: self._on_edit_posting(p))
             actions_layout.addWidget(view_btn)
 
             # Generate Resume button
             generate_btn = QPushButton("📄 Generate Resume")
+            generate_btn.setMinimumHeight(30)
+            generate_btn.setMaximumHeight(35)
             generate_btn.clicked.connect(lambda checked, p=posting: self._on_generate_resume(p))
             actions_layout.addWidget(generate_btn)
 
             # Delete button
             delete_btn = QPushButton("🗑️")
             delete_btn.setToolTip("Delete")
+            delete_btn.setMinimumHeight(30)
+            delete_btn.setMaximumHeight(35)
             delete_btn.clicked.connect(lambda checked, p=posting: self._on_delete_posting(p))
             actions_layout.addWidget(delete_btn)
 
             self.table.setCellWidget(row, 6, actions_widget)
+
+            # Set row height to accommodate buttons
+            self.table.setRowHeight(row, 45)
 
     def _filter_postings(self):
         """Filter postings based on search text."""
@@ -308,6 +327,26 @@ class ManageJobPostingsScreen(BaseScreen):
 
         self._display_postings(filtered)
         self.summary_label.setText(f"Showing {len(filtered)} of {len(self.all_postings)} job postings")
+
+    def _on_apply_online(self, posting: JobPosting):
+        """Open the application URL in a web browser."""
+        if posting.application_url:
+            try:
+                webbrowser.open(posting.application_url)
+                logger.info(f"Opened application URL: {posting.application_url}")
+            except Exception as e:
+                logger.error(f"Failed to open URL: {e}", exc_info=True)
+                QMessageBox.warning(
+                    self,
+                    "Error Opening URL",
+                    f"Could not open the application URL:\n{posting.application_url}\n\nError: {str(e)}"
+                )
+        else:
+            QMessageBox.information(
+                self,
+                "No URL Available",
+                "This job posting does not have an application URL saved."
+            )
 
     def _on_edit_posting(self, posting: JobPosting):
         """Open dialog to edit job posting."""
