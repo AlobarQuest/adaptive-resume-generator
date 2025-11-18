@@ -30,6 +30,7 @@ class DashboardScreen(BaseScreen):
     navigate_to_companies = pyqtSignal()
     navigate_to_general = pyqtSignal()
     navigate_to_profile_creation = pyqtSignal()
+    import_resume_requested = pyqtSignal()
 
     def __init__(
         self,
@@ -72,12 +73,6 @@ class DashboardScreen(BaseScreen):
         )
         hero_layout.addWidget(self.current_profile_label)
 
-        self.upload_btn = QPushButton("📄 Upload Job Posting")
-        self.upload_btn.setObjectName("primaryButton")
-        self.upload_btn.setMinimumHeight(50)
-        self.upload_btn.clicked.connect(self._handle_primary_action)
-        hero_layout.addWidget(self.upload_btn, 0, Qt.AlignmentFlag.AlignCenter)
-
         layout.addWidget(hero_frame)
 
         # Stats panel
@@ -106,50 +101,62 @@ class DashboardScreen(BaseScreen):
 
         layout.addLayout(stats_layout)
 
-        # Bottom section - two panels
+        # Bottom section - Quick action panels
         bottom_layout = QHBoxLayout()
 
-        # Quick manage companies/roles panel
-        quick_manage_frame = QFrame()
-        quick_manage_frame.setObjectName("panelFrame")
-        quick_manage_layout = QVBoxLayout(quick_manage_frame)
+        # Upload Resume panel
+        upload_resume_frame = QFrame()
+        upload_resume_frame.setObjectName("panelFrame")
+        upload_resume_layout = QVBoxLayout(upload_resume_frame)
 
-        quick_title = QLabel("Quick Manage")
-        quick_title.setObjectName("panelTitle")
-        quick_manage_layout.addWidget(quick_title)
+        upload_resume_title = QLabel("📄 Upload Existing Resume")
+        upload_resume_title.setObjectName("panelTitle")
+        upload_resume_layout.addWidget(upload_resume_title)
 
-        self.recent_jobs_label = QLabel("Recent jobs will appear here")
-        self.recent_jobs_label.setWordWrap(True)
-        quick_manage_layout.addWidget(self.recent_jobs_label)
+        upload_resume_desc = QLabel(
+            "Import your existing resume to automatically populate your profile "
+            "with work experience, education, skills, and accomplishments."
+        )
+        upload_resume_desc.setWordWrap(True)
+        upload_resume_desc.setStyleSheet("color: #888; padding: 10px 0;")
+        upload_resume_layout.addWidget(upload_resume_desc)
 
-        quick_manage_layout.addStretch()
+        upload_resume_layout.addStretch()
 
-        manage_btn = QPushButton("Manage Companies & Roles")
-        manage_btn.clicked.connect(self.navigate_to_companies.emit)
-        quick_manage_layout.addWidget(manage_btn)
+        upload_resume_btn = QPushButton("📤 Upload Resume")
+        upload_resume_btn.setObjectName("primaryButton")
+        upload_resume_btn.setMinimumHeight(45)
+        upload_resume_btn.clicked.connect(self.import_resume_requested.emit)
+        upload_resume_layout.addWidget(upload_resume_btn)
 
-        bottom_layout.addWidget(quick_manage_frame)
+        bottom_layout.addWidget(upload_resume_frame)
 
-        # Profile info panel
-        profile_frame = QFrame()
-        profile_frame.setObjectName("panelFrame")
-        profile_layout = QVBoxLayout(profile_frame)
+        # Add Job Posting panel
+        add_job_frame = QFrame()
+        add_job_frame.setObjectName("panelFrame")
+        add_job_layout = QVBoxLayout(add_job_frame)
 
-        profile_title = QLabel("Profile Info")
-        profile_title.setObjectName("panelTitle")
-        profile_layout.addWidget(profile_title)
+        add_job_title = QLabel("💼 Add Job Posting")
+        add_job_title.setObjectName("panelTitle")
+        add_job_layout.addWidget(add_job_title)
 
-        self.profile_info_label = QLabel("Select a profile to view info")
-        self.profile_info_label.setWordWrap(True)
-        profile_layout.addWidget(self.profile_info_label)
+        add_job_desc = QLabel(
+            "Upload or paste a job posting to analyze requirements and generate "
+            "a tailored resume with your best-matching accomplishments."
+        )
+        add_job_desc.setWordWrap(True)
+        add_job_desc.setStyleSheet("color: #888; padding: 10px 0;")
+        add_job_layout.addWidget(add_job_desc)
 
-        profile_layout.addStretch()
+        add_job_layout.addStretch()
 
-        profile_btn = QPushButton("Update General Info")
-        profile_btn.clicked.connect(self.navigate_to_general.emit)
-        profile_layout.addWidget(profile_btn)
+        add_job_btn = QPushButton("➕ Add Job Posting")
+        add_job_btn.setObjectName("primaryButton")
+        add_job_btn.setMinimumHeight(45)
+        add_job_btn.clicked.connect(self.navigate_to_upload.emit)
+        add_job_layout.addWidget(add_job_btn)
 
-        bottom_layout.addWidget(profile_frame)
+        bottom_layout.addWidget(add_job_frame)
 
         layout.addLayout(bottom_layout)
         layout.addStretch()
@@ -188,21 +195,7 @@ class DashboardScreen(BaseScreen):
 
         return card
 
-    def _handle_primary_action(self) -> None:
-        """Handle the primary action button click."""
-        if self.profile_service and self.profile_service.get_profile_by_id(DEFAULT_PROFILE_ID):
-            # Profile exists, navigate to upload
-            self.navigate_to_upload.emit()
-        else:
-            # No profile, navigate to profile creation
-            self.navigate_to_profile_creation.emit()
 
-    def _update_button_state(self) -> None:
-        """Update the primary button text based on profile existence."""
-        if self.profile_service and self.profile_service.get_profile_by_id(DEFAULT_PROFILE_ID):
-            self.upload_btn.setText("📄 Upload Job Posting")
-        else:
-            self.upload_btn.setText("➕ Create Applicant Profile")
 
     def _update_stats(self) -> None:
         """Update the statistics display."""
@@ -237,7 +230,7 @@ class DashboardScreen(BaseScreen):
             self.stat_widgets["education"].value_label.setText(str(len(education)))
 
     def _update_profile_info(self) -> None:
-        """Update the profile info panel."""
+        """Update the profile info display."""
         if not self.profile_service:
             self.current_profile_label.setText("No profile selected")
             return
@@ -247,43 +240,13 @@ class DashboardScreen(BaseScreen):
             # Update hero section current profile label
             profile_name = f"{profile.first_name} {profile.last_name}"
             self.current_profile_label.setText(f"Current Profile: {profile_name}")
-
-            # Update profile info panel
-            info_text = f"<b>{profile.first_name} {profile.last_name}</b><br>"
-            info_text += f"{profile.email}<br>"
-            if profile.phone:
-                info_text += f"{profile.phone}<br>"
-            if profile.city and profile.state:
-                info_text += f"{profile.city}, {profile.state}"
-
-            self.profile_info_label.setText(info_text)
-
-    def _update_recent_jobs(self) -> None:
-        """Update the recent jobs display."""
-        if not self.job_service:
-            return
-
-        jobs = self.job_service.get_jobs_for_profile(DEFAULT_PROFILE_ID)
-
-        if not jobs:
-            self.recent_jobs_label.setText("No jobs added yet. Add your first job!")
-            return
-
-        # Show most recent 3 jobs
-        recent_jobs = sorted(jobs, key=lambda j: j.start_date, reverse=True)[:3]
-
-        jobs_text = "<b>Recent Jobs:</b><br><br>"
-        for job in recent_jobs:
-            jobs_text += f"• {job.job_title} at {job.company_name}<br>"
-
-        self.recent_jobs_label.setText(jobs_text)
+        else:
+            self.current_profile_label.setText("No profile selected")
 
     def on_screen_shown(self) -> None:
         """Refresh data when screen is shown."""
-        self._update_button_state()
         self._update_stats()
         self._update_profile_info()
-        self._update_recent_jobs()
 
 
 __all__ = ["DashboardScreen"]

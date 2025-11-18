@@ -130,6 +130,7 @@ class MainWindow(QMainWindow):
         self.dashboard_screen.navigate_to_companies.connect(lambda: self._navigate_to("companies"))
         self.dashboard_screen.navigate_to_general.connect(lambda: self._navigate_to("general"))
         self.dashboard_screen.navigate_to_profile_creation.connect(self._edit_profile)  # Changed to edit existing profile
+        self.dashboard_screen.import_resume_requested.connect(self._import_resume)
 
         self.profile_screen = ProfileManagementScreen(
             profile_service=self.profile_service,
