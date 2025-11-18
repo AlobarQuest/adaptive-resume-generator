@@ -274,17 +274,6 @@ class ManageJobPostingsScreen(BaseScreen):
             actions_layout.setContentsMargins(4, 4, 4, 4)
             actions_layout.setSpacing(4)
 
-            # Apply Online button (only if URL is available)
-            if posting.application_url:
-                apply_btn = QPushButton("🌐 Apply")
-                apply_btn.setMinimumWidth(85)
-                apply_btn.setMinimumHeight(30)
-                apply_btn.setMaximumHeight(35)
-                apply_btn.setToolTip("Apply Online - Open application URL in browser")
-                apply_btn.setStyleSheet("QPushButton { background-color: #4a90e2; color: white; font-weight: bold; padding: 4px 8px; }")
-                apply_btn.clicked.connect(lambda checked, p=posting: self._on_apply_online(p))
-                actions_layout.addWidget(apply_btn)
-
             # View/Edit button
             view_btn = QPushButton("📝 Edit")
             view_btn.setMinimumWidth(75)
@@ -313,6 +302,17 @@ class ManageJobPostingsScreen(BaseScreen):
             delete_btn.setStyleSheet("QPushButton { padding: 4px 8px; }")
             delete_btn.clicked.connect(lambda checked, p=posting: self._on_delete_posting(p))
             actions_layout.addWidget(delete_btn)
+
+            # Apply Online button (only if URL is available) - positioned at far right
+            if posting.application_url:
+                apply_btn = QPushButton("🌐 Apply")
+                apply_btn.setMinimumWidth(85)
+                apply_btn.setMinimumHeight(30)
+                apply_btn.setMaximumHeight(35)
+                apply_btn.setToolTip("Apply Online - Open application URL in browser")
+                apply_btn.setStyleSheet("QPushButton { background-color: #4a90e2; color: white; font-weight: bold; padding: 4px 8px; }")
+                apply_btn.clicked.connect(lambda checked, p=posting: self._on_apply_online(p))
+                actions_layout.addWidget(apply_btn)
 
             self.table.setCellWidget(row, 6, actions_widget)
 
