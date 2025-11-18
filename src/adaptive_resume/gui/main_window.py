@@ -134,10 +134,20 @@ class MainWindow(QMainWindow):
 
         self.profile_screen = ProfileManagementScreen(
             profile_service=self.profile_service,
+            skill_service=self.skill_service,
+            education_service=self.education_service,
         )
-        # Note: ProfileManagementScreen will be repurposed to just show/edit current profile
+        # Profile actions
         self.profile_screen.edit_profile_requested.connect(self._edit_profile)
         self.profile_screen.import_resume_requested.connect(self._import_resume)
+        # Skills actions
+        self.profile_screen.add_skill_requested.connect(self._add_skill)
+        self.profile_screen.edit_skill_requested.connect(self._edit_skill)
+        self.profile_screen.delete_skill_requested.connect(self._delete_skill)
+        # Education actions
+        self.profile_screen.add_education_requested.connect(self._add_education)
+        self.profile_screen.edit_education_requested.connect(self._edit_education)
+        self.profile_screen.delete_education_requested.connect(self._delete_education)
 
         self.companies_screen = CompaniesRolesScreen(
             job_service=self.job_service,
@@ -670,17 +680,21 @@ class MainWindow(QMainWindow):
                     relevant_coursework=data.relevant_coursework,
                     display_order=0,
                 )
+                # Refresh both education screen and profile screen
                 self.education_screen.on_screen_shown()
+                self.profile_screen.on_screen_shown()
                 self.statusBar().showMessage("Education added successfully", 3000)
             except Exception as exc:  # pragma: no cover
                 QMessageBox.critical(self, "Error", str(exc))
 
-    def _edit_education(self) -> None:
+    def _edit_education(self, education_id: Optional[int] = None) -> None:
         """Edit the selected education entry."""
-        education_id = self.education_screen.get_selected_education_id()
+        # If no ID provided, get from education screen
         if education_id is None:
-            QMessageBox.information(self, "No Education Selected", "Please select an education entry to edit.")
-            return
+            education_id = self.education_screen.get_selected_education_id()
+            if education_id is None:
+                QMessageBox.information(self, "No Education Selected", "Please select an education entry to edit.")
+                return
 
         education = self.education_service.get_education_by_id(education_id)
         dialog = EducationDialog(
@@ -710,17 +724,21 @@ class MainWindow(QMainWindow):
                     honors=data.honors,
                     relevant_coursework=data.relevant_coursework,
                 )
+                # Refresh both education screen and profile screen
                 self.education_screen.on_screen_shown()
+                self.profile_screen.on_screen_shown()
                 self.statusBar().showMessage("Education updated successfully", 3000)
             except Exception as exc:  # pragma: no cover
                 QMessageBox.critical(self, "Error", str(exc))
 
-    def _delete_education(self) -> None:
+    def _delete_education(self, education_id: Optional[int] = None) -> None:
         """Delete the selected education entry."""
-        education_id = self.education_screen.get_selected_education_id()
+        # If no ID provided, get from education screen
         if education_id is None:
-            QMessageBox.information(self, "No Education Selected", "Please select an education entry to delete.")
-            return
+            education_id = self.education_screen.get_selected_education_id()
+            if education_id is None:
+                QMessageBox.information(self, "No Education Selected", "Please select an education entry to delete.")
+                return
 
         education = self.education_service.get_education_by_id(education_id)
 
@@ -736,7 +754,9 @@ class MainWindow(QMainWindow):
         if confirm == QMessageBox.StandardButton.Yes:
             try:
                 self.education_service.delete_education(education_id)
+                # Refresh both education screen and profile screen
                 self.education_screen.on_screen_shown()
+                self.profile_screen.on_screen_shown()
                 self.statusBar().showMessage("Education deleted successfully", 3000)
             except Exception as exc:  # pragma: no cover
                 QMessageBox.critical(self, "Error", f"Failed to delete education: {str(exc)}")
@@ -754,17 +774,21 @@ class MainWindow(QMainWindow):
                     years_experience=data.years_experience,
                     display_order=0,
                 )
+                # Refresh both skills screen and profile screen
                 self.skills_screen.on_screen_shown()
+                self.profile_screen.on_screen_shown()
                 self.statusBar().showMessage("Skill added successfully", 3000)
             except Exception as exc:  # pragma: no cover
                 QMessageBox.critical(self, "Error", str(exc))
 
-    def _edit_skill(self) -> None:
+    def _edit_skill(self, skill_id: Optional[int] = None) -> None:
         """Edit the selected skill."""
-        skill_id = self.skills_screen.get_selected_skill_id()
+        # If no ID provided, get from skills screen
         if skill_id is None:
-            QMessageBox.information(self, "No Skill Selected", "Please select a skill to edit.")
-            return
+            skill_id = self.skills_screen.get_selected_skill_id()
+            if skill_id is None:
+                QMessageBox.information(self, "No Skill Selected", "Please select a skill to edit.")
+                return
 
         skill = self.skill_service.get_skill_by_id(skill_id)
         dialog = SkillDialog(
@@ -786,17 +810,21 @@ class MainWindow(QMainWindow):
                     proficiency_level=data.proficiency_level,
                     years_experience=data.years_experience,
                 )
+                # Refresh both skills screen and profile screen
                 self.skills_screen.on_screen_shown()
+                self.profile_screen.on_screen_shown()
                 self.statusBar().showMessage("Skill updated successfully", 3000)
             except Exception as exc:  # pragma: no cover
                 QMessageBox.critical(self, "Error", str(exc))
 
-    def _delete_skill(self) -> None:
+    def _delete_skill(self, skill_id: Optional[int] = None) -> None:
         """Delete the selected skill."""
-        skill_id = self.skills_screen.get_selected_skill_id()
+        # If no ID provided, get from skills screen
         if skill_id is None:
-            QMessageBox.information(self, "No Skill Selected", "Please select a skill to delete.")
-            return
+            skill_id = self.skills_screen.get_selected_skill_id()
+            if skill_id is None:
+                QMessageBox.information(self, "No Skill Selected", "Please select a skill to delete.")
+                return
 
         skill = self.skill_service.get_skill_by_id(skill_id)
 
@@ -812,7 +840,9 @@ class MainWindow(QMainWindow):
         if confirm == QMessageBox.StandardButton.Yes:
             try:
                 self.skill_service.delete_skill(skill_id)
+                # Refresh both skills screen and profile screen
                 self.skills_screen.on_screen_shown()
+                self.profile_screen.on_screen_shown()
                 self.statusBar().showMessage("Skill deleted successfully", 3000)
             except Exception as exc:  # pragma: no cover
                 QMessageBox.critical(self, "Error", f"Failed to delete skill: {str(exc)}")
