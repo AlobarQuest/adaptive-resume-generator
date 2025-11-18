@@ -175,5 +175,21 @@ This phase addresses 11 UI/UX issues identified by user testing. Issues range fr
 ## Progress Log
 
 ### 2025-01-18
-- Created implementation plan
-- Started Phase 1: Window sizing
+
+#### Completed
+- ✅ Issue 1: Window sizing and resizability (setGeometry 1200x800, setMinimumSize 1000x600)
+- ✅ Issue 11: Navigation menu reordered (Profile Management moved above Settings)
+- ✅ Issue 8: Removed profile selector from Upload Job Posting screen
+- ✅ Issue 9: Updated button text to "Analyze Job/Generate Tailored Resume"
+- ✅ Issue 10: Removed "Upload Job Posting" link from Dashboard hero
+- ✅ Issue 7: Updated Dashboard bottom boxes (Upload Resume + Add Job Posting)
+
+#### In Progress
+- Working on remaining issues 2-6
+
+#### Still To Do
+- Issue 5: Profile Management button sizes
+- Issue 2: Move Education/Skills to Profile Management screen
+- Issue 3: Single-click edit for skills/education
+- Issue 4: Delete buttons in edit dialogs
+- Issue 6: Fix skill autocomplete

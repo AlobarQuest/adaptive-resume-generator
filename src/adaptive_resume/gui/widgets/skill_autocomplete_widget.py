@@ -220,12 +220,14 @@ class SkillAutocompleteWidget(QWidget):
             skill_name = self.input_field.text().strip()
             self.custom_skill_requested.emit(skill_name)
             self.skill_selected.emit(skill_name, None)
+            # Keep the custom skill name in the input field
         else:
             # Database skill
+            # Set input field to selected skill name (don't clear it!)
+            self.input_field.setText(suggestion.name)
             self.skill_selected.emit(suggestion.name, suggestion.id)
 
-        # Clear input and hide dropdown
-        self.input_field.clear()
+        # Hide dropdown (but don't clear input - user can see what they selected)
         self._hide_dropdown()
 
     def _on_item_hovered(self, row: int) -> None:
@@ -264,7 +266,7 @@ class SkillAutocompleteWidget(QWidget):
             if skill_name:
                 self.custom_skill_requested.emit(skill_name)
                 self.skill_selected.emit(skill_name, None)
-                self.input_field.clear()
+                # Keep the custom skill name in the input field
 
     def eventFilter(self, obj, event) -> bool:
         """Handle keyboard events for navigation."""
