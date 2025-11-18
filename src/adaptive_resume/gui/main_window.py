@@ -288,10 +288,27 @@ class MainWindow(QMainWindow):
         # Create TailoredResumeModel from the dataclass
         selected_ids = [acc.bullet_id for acc in tailored_resume.selected_accomplishments]
 
+        # Serialize full accomplishment data for later PDF generation
+        accomplishments_data = []
+        for acc in tailored_resume.selected_accomplishments:
+            accomplishments_data.append({
+                'bullet_id': acc.bullet_id,
+                'job_id': acc.job_id,
+                'text': acc.text,
+                'skill_match_score': acc.skill_match_score,
+                'semantic_score': acc.semantic_score,
+                'recency_score': acc.recency_score,
+                'metrics_score': acc.metrics_score,
+                'total_score': acc.total_score,
+                'matched_skills': acc.matched_skills,
+                'relevance_explanation': acc.relevance_explanation
+            })
+
         resume_model = TailoredResumeModel(
             profile_id=tailored_resume.profile_id,
             job_posting_id=job_posting_id,
             selected_accomplishment_ids=json.dumps(selected_ids),
+            selected_accomplishments_json=json.dumps(accomplishments_data),
             skill_coverage_json=json.dumps(tailored_resume.skill_coverage),
             coverage_percentage=tailored_resume.coverage_percentage,
             gaps_json=json.dumps(tailored_resume.gaps),

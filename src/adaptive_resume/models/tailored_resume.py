@@ -31,6 +31,10 @@ class TailoredResumeModel(Base):
     # Selected accomplishments (stored as JSON array of bullet IDs)
     selected_accomplishment_ids = Column(Text, nullable=False)  # JSON: [1, 5, 7, ...]
 
+    # Full accomplishment data (stored as JSON array of accomplishment objects)
+    # Includes text, scores, matched_skills, etc. for PDF generation
+    selected_accomplishments_json = Column(Text, nullable=True)  # JSON: [{bullet_id: 1, text: "...", ...}, ...]
+
     # Skill coverage analysis (stored as JSON)
     skill_coverage_json = Column(Text, nullable=True)  # JSON: {"Python": true, "AWS": false, ...}
     coverage_percentage = Column(Float, nullable=True)  # 0.0-1.0
