@@ -20,7 +20,8 @@
       "Bash(git pull:*)",
       "Bash(alembic stamp:*)",
       "Bash(dir \"C:\\Users\\devon\\Projects\\adaptive-resume-generator\\Issue Screenshots\")",
-      "Bash(del \"alembic\\versions\\0afdbb505196_add_selected_accomplishments_json_to_.py\")"
+      "Bash(del \"alembic\\versions\\0afdbb505196_add_selected_accomplishments_json_to_.py\")",
+      "Bash(Resume\" button in the Profile Management screen header.\n\nChanges:\n- Set both buttons to minimum width of 230px\n- Set both buttons to minimum height of 40px\n- Buttons now have consistent, equal sizing\n\nFiles modified:\n- src/adaptive_resume/gui/screens/profile_management_screen.py\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

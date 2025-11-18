@@ -55,12 +55,16 @@ class ProfileManagementScreen(BaseScreen):
         # Import resume button
         import_resume_btn = QPushButton("📄 Import/Update from Resume")
         import_resume_btn.setToolTip("Import or update your profile from an existing resume")
+        import_resume_btn.setMinimumWidth(230)
+        import_resume_btn.setMinimumHeight(40)
         import_resume_btn.clicked.connect(self.import_resume_requested.emit)
         header_layout.addWidget(import_resume_btn)
 
         # Edit profile button
         edit_profile_btn = QPushButton("✏️ Edit Profile")
         edit_profile_btn.setObjectName("primaryButton")
+        edit_profile_btn.setMinimumWidth(230)
+        edit_profile_btn.setMinimumHeight(40)
         edit_profile_btn.clicked.connect(self.edit_profile_requested.emit)
         header_layout.addWidget(edit_profile_btn)
 
