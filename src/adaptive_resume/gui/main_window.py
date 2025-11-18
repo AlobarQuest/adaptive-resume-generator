@@ -91,7 +91,9 @@ class MainWindow(QMainWindow):
         self.current_profile_id: int = DEFAULT_PROFILE_ID
         self.current_tailored_resume_id: Optional[int] = None
 
-        self.resize(1200, 720)
+        # Set window size and make resizable
+        self.setGeometry(100, 100, 1200, 800)  # x, y, width, height
+        self.setMinimumSize(1000, 600)  # Minimum size to prevent too-small window
 
         # Ensure profile exists, create if needed
         self._ensure_profile()

@@ -19,7 +19,8 @@
       "Bash(mkdir:*)",
       "Bash(git pull:*)",
       "Bash(alembic stamp:*)",
-      "Bash(dir \"C:\\Users\\devon\\Projects\\adaptive-resume-generator\\Issue Screenshots\")"
+      "Bash(dir \"C:\\Users\\devon\\Projects\\adaptive-resume-generator\\Issue Screenshots\")",
+      "Bash(del \"alembic\\versions\\0afdbb505196_add_selected_accomplishments_json_to_.py\")"
     ],
     "deny": [],
     "ask": []

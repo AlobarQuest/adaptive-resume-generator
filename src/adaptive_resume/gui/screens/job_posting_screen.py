@@ -32,6 +32,7 @@ except ImportError as exc:
 
 from .base_screen import BaseScreen
 from adaptive_resume.models import Profile
+from adaptive_resume.models.base import DEFAULT_PROFILE_ID
 from adaptive_resume.services import (
     JobPostingParser,
     NLPAnalyzer,
@@ -455,21 +456,6 @@ class JobPostingScreen(BaseScreen):
         description.setStyleSheet("color: #ccc; font-size: 13px; margin-bottom: 10px;")
         layout.addWidget(description)
 
-        # Profile selector
-        profile_section = QFrame()
-        profile_section.setObjectName("settingsCard")
-        profile_layout = QVBoxLayout(profile_section)
-
-        profile_label = QLabel("Select Profile:")
-        profile_label.setStyleSheet("font-weight: bold; font-size: 14px;")
-        profile_layout.addWidget(profile_label)
-
-        self.profile_combo = QComboBox()
-        self.profile_combo.setMinimumHeight(40)
-        profile_layout.addWidget(self.profile_combo)
-
-        layout.addWidget(profile_section)
-
         # Upload area
         self.upload_frame = QFrame()
         self.upload_frame.setObjectName("uploadFrame")
@@ -526,7 +512,7 @@ class JobPostingScreen(BaseScreen):
         layout.addWidget(self.upload_frame)
 
         # Process button
-        self.process_btn = QPushButton("🚀 Analyze & Generate Tailored Resume")
+        self.process_btn = QPushButton("🚀 Analyze Job/Generate Tailored Resume")
         self.process_btn.setObjectName("primaryButton")
         self.process_btn.setMinimumHeight(50)
         self.process_btn.setEnabled(False)
@@ -711,11 +697,8 @@ class JobPostingScreen(BaseScreen):
             QMessageBox.warning(self, "No Job Posting", "Please upload a job posting first.")
             return
 
-        # Get current profile
-        profile_id = self.profile_combo.currentData()
-        if not profile_id:
-            QMessageBox.warning(self, "No Profile", "Please select a profile first.")
-            return
+        # Use default profile (single-user mode)
+        profile_id = DEFAULT_PROFILE_ID
 
         # Load profile accomplishments
         accomplishments = self._load_accomplishments(profile_id)
@@ -817,36 +800,9 @@ class JobPostingScreen(BaseScreen):
             file_path = urls[0].toLocalFile()
             self._load_file(file_path)
 
-    def _update_profile_combo(self) -> None:
-        """Update the profile dropdown with all available profiles."""
-        if not self.profile_service:
-            return
-
-        self.profile_combo.clear()
-
-        # Load all profiles
-        profiles = (
-            self.profile_service.session.query(Profile)
-            .order_by(Profile.last_name.asc(), Profile.first_name.asc())
-            .all()
-        )
-
-        if not profiles:
-            self.profile_combo.addItem("No profiles available")
-            return
-
-        # Add each profile
-        for profile in profiles:
-            display_name = f"{profile.first_name} {profile.last_name}"
-            self.profile_combo.addItem(display_name, profile.id)
-
-        # Select first profile by default
-        if self.profile_combo.count() > 0:
-            self.profile_combo.setCurrentIndex(0)
-
     def on_screen_shown(self) -> None:
         """Refresh data when screen is shown."""
-        self._update_profile_combo()
+        pass  # No profile combo to update in single-user mode
 
 
 __all__ = ["JobPostingScreen"]

@@ -52,16 +52,13 @@ class NavigationMenu(QWidget):
 
         nav_items = [
             ("dashboard", "📊 Dashboard"),
-            ("profile", "👤 Profile Management"),
             ("companies", "🏢 Companies and Roles"),
-            ("education", "🎓 Manage Education"),
-            ("skills", "🎯 Manage Skills"),
             ("upload", "📄 Upload Job Posting"),
             ("manage_postings", "💼 Manage Job Postings"),
             ("applications", "📝 Track Applications"),
             ("review", "📋 Review and Print"),
         ]
-        
+
         for screen_id, label_text in nav_items:
             btn = QPushButton(label_text)
             btn.setObjectName("navButton")
@@ -70,20 +67,29 @@ class NavigationMenu(QWidget):
             btn.clicked.connect(lambda checked, s=screen_id: self._on_button_clicked(s))
             self.buttons[screen_id] = btn
             layout.addWidget(btn)
-        
+
         # Set dashboard as default
         self.buttons["dashboard"].setChecked(True)
-        
-        # Spacer to push settings to bottom
+
+        # Spacer to push bottom items down
         layout.addStretch()
-        
-        # Separator before settings
+
+        # Separator before bottom items
         separator2 = QFrame()
         separator2.setFrameShape(QFrame.Shape.HLine)
         separator2.setObjectName("navSeparator")
         layout.addWidget(separator2)
-        
-        # Settings button at bottom
+
+        # Profile Management button at bottom (above Settings)
+        profile_btn = QPushButton("👤 Profile Management")
+        profile_btn.setObjectName("navButton")
+        profile_btn.setCheckable(True)
+        profile_btn.setMinimumHeight(50)
+        profile_btn.clicked.connect(lambda checked: self._on_button_clicked("profile"))
+        self.buttons["profile"] = profile_btn
+        layout.addWidget(profile_btn)
+
+        # Settings button at very bottom
         settings_btn = QPushButton("⚙️ Settings")
         settings_btn.setObjectName("navButton")
         settings_btn.setMinimumHeight(50)
