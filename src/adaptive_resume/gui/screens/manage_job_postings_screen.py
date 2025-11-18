@@ -196,7 +196,7 @@ class ManageJobPostingsScreen(BaseScreen):
         self.table.setColumnWidth(1, 200)
         self.table.setColumnWidth(2, 150)
         self.table.setColumnWidth(3, 100)
-        self.table.setColumnWidth(6, 250)
+        self.table.setColumnWidth(6, 450)  # Increased for Apply Online + Edit + Generate + Delete buttons
 
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
@@ -276,32 +276,41 @@ class ManageJobPostingsScreen(BaseScreen):
 
             # Apply Online button (only if URL is available)
             if posting.application_url:
-                apply_btn = QPushButton("🌐 Apply Online")
+                apply_btn = QPushButton("🌐 Apply")
+                apply_btn.setMinimumWidth(85)
                 apply_btn.setMinimumHeight(30)
                 apply_btn.setMaximumHeight(35)
-                apply_btn.setStyleSheet("QPushButton { background-color: #4a90e2; color: white; font-weight: bold; }")
+                apply_btn.setToolTip("Apply Online - Open application URL in browser")
+                apply_btn.setStyleSheet("QPushButton { background-color: #4a90e2; color: white; font-weight: bold; padding: 4px 8px; }")
                 apply_btn.clicked.connect(lambda checked, p=posting: self._on_apply_online(p))
                 actions_layout.addWidget(apply_btn)
 
             # View/Edit button
             view_btn = QPushButton("📝 Edit")
+            view_btn.setMinimumWidth(75)
             view_btn.setMinimumHeight(30)
             view_btn.setMaximumHeight(35)
+            view_btn.setStyleSheet("QPushButton { padding: 4px 8px; }")
             view_btn.clicked.connect(lambda checked, p=posting: self._on_edit_posting(p))
             actions_layout.addWidget(view_btn)
 
             # Generate Resume button
-            generate_btn = QPushButton("📄 Generate Resume")
+            generate_btn = QPushButton("📄 Generate")
+            generate_btn.setMinimumWidth(105)
             generate_btn.setMinimumHeight(30)
             generate_btn.setMaximumHeight(35)
+            generate_btn.setToolTip("Generate tailored resume for this job posting")
+            generate_btn.setStyleSheet("QPushButton { padding: 4px 8px; }")
             generate_btn.clicked.connect(lambda checked, p=posting: self._on_generate_resume(p))
             actions_layout.addWidget(generate_btn)
 
             # Delete button
             delete_btn = QPushButton("🗑️")
-            delete_btn.setToolTip("Delete")
+            delete_btn.setMinimumWidth(40)
             delete_btn.setMinimumHeight(30)
             delete_btn.setMaximumHeight(35)
+            delete_btn.setToolTip("Delete this job posting")
+            delete_btn.setStyleSheet("QPushButton { padding: 4px 8px; }")
             delete_btn.clicked.connect(lambda checked, p=posting: self._on_delete_posting(p))
             actions_layout.addWidget(delete_btn)
 
